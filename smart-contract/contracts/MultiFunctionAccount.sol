@@ -15,6 +15,7 @@ struct UTXO {
 contract MultiFunctionAccount {
     address public sendKey;
     address public receiveKey;
+    uint256 public pubKey;
     int public numBreakUTXO;
     UTXO[] unspentUTXO;
 }

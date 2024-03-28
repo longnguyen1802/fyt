@@ -8,6 +8,28 @@ struct ProtocolParams {
     uint256 q;
     // Group genenrator
     uint256 g;
+    uint256 initalMemberFee;
+    Rational parentFee;
+}
+
+struct InitialState {
+    uint256 endblock;
+    bool isEnd;
+}
+
+struct SignerInfo {
+    address currentSigner;
+    uint256 nextSignerRegisterEndBlock;
+    uint256 currentSignerRegisterMaxIndex;
+    bool isSignerRegisterState;
+}
+
+struct RoundInfo {
+    uint256 number;
+    SignerInfo signerInfo;
+    bool isSendState;
+    bool isReceiveState;
+    bool isEnd;
 }
 
 contract EntryWorkflow {}
@@ -15,13 +37,41 @@ contract EntryWorkflow {}
 contract DistributionWorkflow {}
 
 contract Protocol {
+    ProtocolParams params;
+    InitialState initialState;
+    RoundInfo roundInfo;
     // call two other contract
     // rotated signer
-    MultiFunctionAccount signer;
-    uint256 roundNumber;
     uint256 numberMember;
-    uint256 indexLastSigner;
-    bool inRoundProcess;
+
+    /*
+    Constructor
+    Requirement:
+        Set up protocol parameter
+        Set up end block for initial member register
+     */
+    constructor(){
+
+    }
+
+    /*
+    Register for initial member
+    Check timestamp
+    Contribute the protocol fee
+    Set up the send key for account (optional sign key )
+     */
+
+    function initialMemberRegister() public {}
+
+    /*
+    Close the inital member register state
+    Check timestamp
+    Can be call by anyone
+    End the initial state
+     */
+    function closeInitialState() public {}
+
+
     /*  Bid to become next signer
         Requirement :
             Account not being banned for signer (Caught cheat previously)
@@ -63,6 +113,11 @@ contract Protocol {
     function endSignPhase() public {}
 
     /*
+        Inner member send request to refer new member
+     */
+    function requestRefer() public {}
+
+    /*
         Onboard newmember to prococol
         Requirements:
             Check signature
@@ -93,9 +148,9 @@ contract Protocol {
     /*
         If the round end success with verifySigner, people can claim money before round end.
         Timestamp require
-        Or claim money if verifySigner fail and money from Signer deposit
+        Refund for unsuccess signer register
      */
-    function claimMoney() public {}
+    function refundSigner() public {}
 }
 
 /*
