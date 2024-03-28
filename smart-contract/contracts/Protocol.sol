@@ -32,16 +32,10 @@ struct RoundInfo {
     bool isEnd;
 }
 
-contract EntryWorkflow {}
-
-contract DistributionWorkflow {}
-
 contract Protocol {
     ProtocolParams params;
     InitialState initialState;
     RoundInfo roundInfo;
-    // call two other contract
-    // rotated signer
     uint256 numberMember;
 
     /*
@@ -152,9 +146,3 @@ contract Protocol {
      */
     function refundSigner() public {}
 }
-
-/*
-How to implement hash function
-A chain hash is ok
-
- */
