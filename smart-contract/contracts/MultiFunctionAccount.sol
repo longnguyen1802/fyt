@@ -17,18 +17,26 @@ struct UTXO {
 // }
 contract MultiFunctionAccount {
     uint256 pubKey;
+    // For money workflow
+    uint256 signNonce;
     uint256 sendKey;
     uint256 receiveKey;
     int numBreakUTXO;
     UTXO[] unspentUTXO;
     uint256 signIndex;
-    constructor(uint256 newPubKey, uint256 newSendKey, uint256 newReceiveKey) {
+    constructor(
+        uint256 newPubKey,
+        uint256 newSendKey,
+        uint256 newReceiveKey,
+        uint256 newSignNonce
+    ) {
         pubKey = newPubKey;
         sendKey = newSendKey;
         receiveKey = newReceiveKey;
         numBreakUTXO = 0;
         unspentUTXO = new UTXO[](0);
         signIndex = block.timestamp;
+        signNonce = newSignNonce;
     }
 
     function getSignIndex() public view returns (uint256) {

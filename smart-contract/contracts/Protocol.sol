@@ -3,6 +3,7 @@ pragma solidity 0.8.13;
 
 import "./MultiFunctionAccount.sol";
 import "./BlindSchnorr.sol";
+import "./AbeOkamotoPartialBlind.sol";
 
 struct DeploymentState {
     bool isDeploymentEnd;
@@ -11,6 +12,7 @@ struct DeploymentState {
 
 struct ProtocolParams {
     BlindSchnoor bs;
+    AbeOkamotoBlind ab;
     uint256 initalMemberFee;
     Rational parentFee;
 }
@@ -40,6 +42,7 @@ struct RoundInfo {
 
 contract Protocol {
     event RequestRefer(address indexed signer);
+    event SendTransactionRequest(address indexed signer, uint256 e);
 
     ProtocolParams params;
     InitialState initialState;
@@ -51,13 +54,13 @@ contract Protocol {
     mapping(address => bool) signerDeposit;
 
     mapping(uint256 => uint256) referMessage;
-    mapping(uint256 => uint256) distributeMoneyMessage;
+    mapping(address => mapping(uint256 => bool)) distributeMoneyMessage;
 
     mapping(uint256 => uint256) referSignature;
-    mapping(uint256 => uint256) distributeMoneySignature;
+    mapping(address => mapping(uint256 => uint256)) distributeMoneySignature;
+    mapping(address => uint256) sendTransactionConfirm;
     // The random number that member send to signer at start of workflow is serve as identify
     mapping(address => mapping(uint256 => bool)) referIdentify;
-    mapping(address => mapping(uint256 => bool)) distributeMoneyIdentify;
     /*
     Constructor
     Requirement:
@@ -202,7 +205,7 @@ contract Protocol {
         SchnorrSignature memory schSig = SchnorrSignature(e, s);
         // Check BlindSchnorr Signature
         require(
-            verifySignature(
+            verifySchnorrSignature(
                 bs,
                 schSig,
                 msg.sender,
@@ -216,17 +219,50 @@ contract Protocol {
         Interactive process, need to call from distribution workflow
         This include send blind message only
      */
-    function sendTransaction() public {}
+    function sendTransaction(uint256 e) public {
+        require(members[msg.sender]);
+        distributeMoneyMessage[msg.sender][e] = true;
+        emit SendTransactionRequest(msg.sender, e);
+    }
 
+    function signTransaction(address account, uint256 r) public {
+        require(msg.sender == signerInfo.currentSigner);
+        // Verify signer computation
+        distributeMoneySignature[account][e] = r;
+    }
     /*
         Provide signature for receive money
         Require sign process end
     */
-    function receiveTransaction() public {}
+    function receiveTransaction(
+        uint256 money,
+        uint256 z,
+        uint256 rho,
+        uint256 delta,
+        uint256 omega,
+        uint256 sigma
+    ) public {
+        require(z == keccak256(abi.encode(money)));
+        require(
+            verifyAbeOkamotoSignature(
+                params.ab,
+                MultiFunctionAccount(signerInfo.currentSigner).getSignKey(),
+                z,
+                msg.sender,
+                rho,
+                omega,
+                sigma,
+                delta
+            )
+        );
+        sendTransactionConfirm[msg.sender] += money;
+    }
 
     /*
         Unforgery process
         Check the sum of send money and receive money to decide this round is success
      */
     function verifySigner() public {}
+
+    function claimRoundMoney() public {}
 }

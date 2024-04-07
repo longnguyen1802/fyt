@@ -58,7 +58,7 @@ function unblindMessage(
     return SchnorrSignature(Math.mod(s - alpha, bs.q), sig.e0);
 }
 
-function verifySignature(
+function verifySchnorrSignature(
     BlindSchnoor bs,
     Signature calldata sig,
     address calldata m,
