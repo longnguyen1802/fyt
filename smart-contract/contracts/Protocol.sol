@@ -41,6 +41,8 @@ struct RoundInfo {
 }
 
 contract Protocol {
+    event RequestRefer(address indexed signer);
+
     ProtocolParams params;
     InitialState initialState;
     RoundInfo roundInfo;
@@ -49,6 +51,15 @@ contract Protocol {
     SignerInfo signerInfo;
     mapping(address => bool) members;
     mapping(address => bool) signerDeposit;
+
+    mapping(uint256 => uint256) referMessage;
+    mapping(uint256 => uint256) distributeMoneyMessage;
+
+    mapping(uint256 => uint256) referSignature;
+    mapping(uint256 => uint256) distributeMoneySignature;
+    // The random number that member send to signer at start of workflow is serve as identify
+    mapping(address => mapping(uint256 => bool)) referIdentify;
+    mapping(address => mapping(uint256 => bool)) distributeMoneyIdentify;
     /*
     Constructor
     Requirement:
@@ -64,11 +75,11 @@ contract Protocol {
     Set up the send key for account (optional sign key )
      */
 
-    function initialMemberRegister(address accountAddress) public payable {
+    function initialMemberRegister() public payable {
         require(msg.value >= params.initalMemberFee);
         require(block.timestamp <= state.deployTimeEnd);
         // Need to check interface (later)
-        members[accountAddress] = true;
+        members[msg.sender] = true;
     }
 
     /*
@@ -162,8 +173,25 @@ contract Protocol {
     /*
         Inner member send request to refer new member
      */
-    function requestRefer() public {}
+    function requestRefer() public {
+        require(members[msg.sender]);
+        emit RequestRefer(msg.sender);
+    }
 
+    function startRequestRefer(address account, uint256 nonce) public {
+        require(msg.sender == signerInfo.currentSigner);
+        referIdentify[account][nonce] = true;
+    }
+
+    function sendReferRequest(uint256 nonce, uint256 e) public {
+        require(members[msg.sender]);
+        require(referIdentify[msg.sender][nonce]);
+        referMessage[nonce] = e;
+    }
+    function signReferRequest(uint256 nonce, uint256 s) public {
+        require(msg.sender == signerInfo.currentSigner);
+        referSignature[nonce] = s;
+    }
     /*
         Onboard newmember to prococol
         Requirements:
@@ -172,7 +200,12 @@ contract Protocol {
             Check timestamp (sign phase end)
         Create new UTXO for him and save join round
      */
-    function onboardMember() public {}
+    function onboardMember(uint256 e, uint256 s) public {
+        // Check BlindSchnorr Signature
+        e;
+        s;
+        members[msg.sender] = true;
+    }
 
     /*
         Interactive process, need to call from distribution workflow
@@ -191,11 +224,4 @@ contract Protocol {
         Check the sum of send money and receive money to decide this round is success
      */
     function verifySigner() public {}
-
-    /*
-        If the round end success with verifySigner, people can claim money before round end.
-        Timestamp require
-        Refund for unsuccess signer register
-     */
-    function refundSigner() public {}
 }
