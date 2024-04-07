@@ -2,6 +2,7 @@
 pragma solidity 0.8.13;
 
 import "./MultiFunctionAccount.sol";
+import "./BlindSchnorr.sol";
 
 struct DeploymentState {
     bool isDeploymentEnd;
@@ -9,10 +10,7 @@ struct DeploymentState {
 }
 
 struct ProtocolParams {
-    uint256 p;
-    uint256 q;
-    // Group genenrator
-    uint256 g;
+    BlindSchnoor bs;
     uint256 initalMemberFee;
     Rational parentFee;
 }
@@ -201,9 +199,16 @@ contract Protocol {
         Create new UTXO for him and save join round
      */
     function onboardMember(uint256 e, uint256 s) public {
+        SchnorrSignature memory schSig = SchnorrSignature(e, s);
         // Check BlindSchnorr Signature
-        e;
-        s;
+        require(
+            verifySignature(
+                bs,
+                schSig,
+                msg.sender,
+                MultiFunctionAccount(signerInfo.currentSigner).getSignKey()
+            )
+        );
         members[msg.sender] = true;
     }
 

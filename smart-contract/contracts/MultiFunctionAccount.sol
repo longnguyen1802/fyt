@@ -37,4 +37,8 @@ contract MultiFunctionAccount {
     function increaseSignerIndex(uint256 amount) external {
         signIndex += amount;
     }
+
+    function getSignKey() public view returns (uint256) {
+        return pubKey;
+    }
 }

@@ -15,57 +15,62 @@ struct SchnorrSignature {
     uint256 s0;
 }
 
-contract BlindSchnoor {
-    uint256 public g;
-    uint256 public p;
-    uint256 public q;
-    function blindMessage(
-        uint256 calldata r,
-        uint256 calldata alpha,
-        uint256 calldata beta,
-        uint256 calldata m
-    ) internal view returns (BlindSchnorrSig) {
-        uint256 r0 = Math.mulmod(
-            r,
-            Math.mulmod(
-                Math.inverse(Math.modexp(g, alpha, p), p),
-                Math.inverse(Math.modexp(y, beta, p), p),
-                p
-            )
-        );
-        uint256 e0 = Math.mod(keccak256(abi.encode(m, r0)), q);
-        return BlindSchnorrSig(e0, Math.mod(e0 + beta, q));
-    }
+struct BlindSchnoor {
+    uint256 g;
+    uint256 p;
+    uint256 q;
+}
 
-    function signMessage(
-        uint256 calldata prk,
-        uint256 calldata K,
-        uint256 calldata e
-    ) internal view returns (uint256) {
-        return Math.mod(K + prk * e, q);
-    }
+function blindMessage(
+    BlindSchnoor bs,
+    uint256 calldata r,
+    uint256 calldata alpha,
+    uint256 calldata beta,
+    address calldata m
+) internal view returns (BlindSchnorrSig) {
+    uint256 r0 = Math.mulmod(
+        r,
+        Math.mulmod(
+            Math.inverse(Math.modexp(bs.g, alpha, bs.p), bs.p),
+            Math.inverse(Math.modexp(y, beta, bs.p), bs.p),
+            bs.p
+        )
+    );
+    uint256 e0 = Math.mod(keccak256(abi.encode(m, r0)), bs.q);
+    return BlindSchnorrSig(e0, Math.mod(e0 + beta, bs.q));
+}
 
-    function unblindMessage(
-        BlindSig calldata s,
-        uint256 calldata alpha,
-        BlindSig calldata sig
-    ) public view returns (SchnorrSignature) {
-        return SchnorrSignature(Math.mod(s - alpha, q), sig.e0);
-    }
+function signMessage(
+    BlindSchnoor bs,
+    uint256 calldata prk,
+    uint256 calldata K,
+    uint256 calldata e
+) internal view returns (uint256) {
+    return Math.mod(K + prk * e, bs.q);
+}
 
-    function verifySignature(
-        Signature calldata sig,
-        uint256 calldata m,
-        uint256 calldata pk
-    ) public returns (bool) {
-        uint256 verifyFactor = mulmod(
-            Math.modexp(g, sig.s0, q),
-            Math.modexp(pk, sig.e0, q),
-            q
-        );
-        require(
-            Math.mod(sig.e0, q) ==
-                Math.mode(keccak256(abi.encode(m, verifyFactor)), q)
-        );
-    }
+function unblindMessage(
+    BlindSchnoor bs,
+    BlindSig calldata s,
+    uint256 calldata alpha,
+    BlindSig calldata sig
+) public view returns (SchnorrSignature) {
+    return SchnorrSignature(Math.mod(s - alpha, bs.q), sig.e0);
+}
+
+function verifySignature(
+    BlindSchnoor bs,
+    Signature calldata sig,
+    address calldata m,
+    uint256 calldata pk
+) public returns (bool) {
+    uint256 verifyFactor = mulmod(
+        Math.modexp(bs.g, sig.s0, bs.q),
+        Math.modexp(pk, sig.e0, bs.q),
+        bs.q
+    );
+    require(
+        Math.mod(sig.e0, bs.q) ==
+            Math.mode(keccak256(abi.encode(m, verifyFactor)), bs.q)
+    );
 }
