@@ -12,10 +12,29 @@ struct UTXO {
     Rational protocolParams;
 }
 
+// interface AccountInterface {
+
+// }
 contract MultiFunctionAccount {
-    address public sendKey;
-    address public receiveKey;
-    uint256 public pubKey;
-    int public numBreakUTXO;
+    uint256 pubKey;
+    uint256 sendKey;
+    uint256 receiveKey;
+    int numBreakUTXO;
     UTXO[] unspentUTXO;
+    uint256 signIndex;
+    constructor(uint256 newPubKey, uint256 newSendKey, uint256 newReceiveKey) {
+        pubKey = newPubKey;
+        sendKey = newSendKey;
+        receiveKey = newReceiveKey;
+        numBreakUTXO = 0;
+        unspentUTXO = new UTXO[](0);
+        signIndex = block.timestamp;
+    }
+
+    function getSignIndex() public view returns (uint256) {
+        return signIndex;
+    }
+    function increaseSignerIndex(uint256 amount) external {
+        signIndex += amount;
+    }
 }

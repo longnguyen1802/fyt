@@ -3,6 +3,11 @@ pragma solidity 0.8.13;
 
 import "./MultiFunctionAccount.sol";
 
+struct DeploymentState {
+    bool isDeploymentEnd;
+    uint256 deployTimeEnd;
+}
+
 struct ProtocolParams {
     uint256 p;
     uint256 q;
@@ -19,13 +24,16 @@ struct InitialState {
 
 struct SignerInfo {
     address currentSigner;
+    address nextSigner;
+    uint256 nextSignerIndex;
     uint256 nextSignerRegisterEndBlock;
-    uint256 currentSignerRegisterMaxIndex;
-    bool isSignerRegisterState;
+    uint256 signerDepositFee;
 }
 
 struct RoundInfo {
     uint256 number;
+    uint256 roundEnd;
+    uint256 roundLong;
     SignerInfo signerInfo;
     bool isSendState;
     bool isReceiveState;
@@ -37,16 +45,17 @@ contract Protocol {
     InitialState initialState;
     RoundInfo roundInfo;
     uint256 numberMember;
-
+    DeploymentState state;
+    SignerInfo signerInfo;
+    mapping(address => bool) members;
+    mapping(address => bool) signerDeposit;
     /*
     Constructor
     Requirement:
         Set up protocol parameter
         Set up end block for initial member register
      */
-    constructor(){
-
-    }
+    constructor() {}
 
     /*
     Register for initial member
@@ -55,7 +64,12 @@ contract Protocol {
     Set up the send key for account (optional sign key )
      */
 
-    function initialMemberRegister() public {}
+    function initialMemberRegister(address accountAddress) public payable {
+        require(msg.value >= params.initalMemberFee);
+        require(block.timestamp <= state.deployTimeEnd);
+        // Need to check interface (later)
+        members[accountAddress] = true;
+    }
 
     /*
     Close the inital member register state
@@ -63,8 +77,10 @@ contract Protocol {
     Can be call by anyone
     End the initial state
      */
-    function closeInitialState() public {}
-
+    function closeDeploymentState() public {
+        require(block.timestamp > state.deployTimeEnd);
+        state.isDeploymentEnd = true;
+    }
 
     /*  Bid to become next signer
         Requirement :
@@ -72,14 +88,43 @@ contract Protocol {
             Chose the smallest Index
             Increase the index of member being chose by current number member
      */
-    function bidForNextSigner() public {}
+    function bidForNextSigner() public payable {
+        require(members[msg.sender]);
+        require(msg.value == signerInfo.signerDepositFee);
+        uint256 signIndex = MultiFunctionAccount(msg.sender).getSignIndex();
+        require(signIndex < signerInfo.nextSignerIndex);
+        signerInfo.nextSigner = msg.sender;
+        signerInfo.nextSignerIndex = signIndex;
+        signerDeposit[msg.sender] = true;
+    }
+
+    function refundUnsuccessSigner() public {
+        require(members[msg.sender]);
+        require(signerDeposit[msg.sender]);
+        require(signerInfo.currentSigner != msg.sender);
+        require(signerInfo.nextSigner != msg.sender);
+        signerDeposit[msg.sender] = false;
+        payable(msg.sender).transfer(signerInfo.signerDepositFee);
+    }
 
     /*
         Start a new round with new signer and allow for bid next signer 
         Requirement:
             Round not in process
      */
-    function startNewRound() public {}
+    function startNewRound() public {
+        require(roundInfo.isEnd);
+        require(signerInfo.nextSignerRegisterEndBlock <= block.timestamp);
+        signerInfo.nextSignerRegisterEndBlock += roundInfo.roundLong;
+        roundInfo.isEnd = false;
+        roundInfo.roundEnd += roundInfo.roundLong;
+        signerInfo.currentSigner = signerInfo.nextSigner;
+        signerInfo.nextSigner = address(0);
+        MultiFunctionAccount(signerInfo.nextSigner).increaseSignerIndex(
+            numberMember
+        );
+        roundInfo.isEnd = false;
+    }
 
     /*
         End current round
@@ -88,7 +133,15 @@ contract Protocol {
             Call function to decide cheat signer
             Refund for signer
      */
-    function endRound() public {}
+    function endRound() public {
+        require(roundInfo.roundEnd <= block.timestamp);
+        require(roundInfo.isEnd == false);
+        signerDeposit[signerInfo.currentSigner] = false;
+        // Decide cheat signer
+        // Increase signer index if cheat
+        // Refund if not cheat;
+        roundInfo.isEnd = true;
+    }
 
     /*
         End the send phase and noone can send in current round after this
