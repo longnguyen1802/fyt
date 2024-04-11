@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "./MultiFunctionAccount.sol";
+import "./MemberAccount.sol";
 import "./BlindSchnorr.sol";
 import "./AbeOkamotoPartialBlind.sol";
+import "./ReferMixer.sol";
+import "./MoneyMixer.sol";
 
 struct DeploymentState {
     bool isDeploymentEnd;
@@ -11,10 +13,19 @@ struct DeploymentState {
 }
 
 struct ProtocolParams {
-    BlindSchnoor bs;
-    AbeOkamotoBlind ab;
-    uint256 initalMemberFee;
+    // Protocol generator
+    uint256 p;
+    uint256 q;
+    uint256 g;
+    // Random number
+    uint256 Ms;
+    uint256 Md;
+    // Percentage send to parent
     Rational parentFee;
+    // Encode fee
+    uint256 protocolFee;
+    uint256 joinFee;
+    uint256 signerDepositFee;
 }
 
 struct InitialState {
@@ -27,40 +38,47 @@ struct SignerInfo {
     address nextSigner;
     uint256 nextSignerIndex;
     uint256 nextSignerRegisterEndBlock;
-    uint256 signerDepositFee;
+    mapping(address => bool) signerDeposit;
 }
 
 struct RoundInfo {
+    // Basic round infomation
     uint256 number;
     uint256 roundEnd;
     uint256 roundLong;
-    SignerInfo signerInfo;
-    bool isSendState;
-    bool isReceiveState;
     bool isEnd;
+    // Signer infomation
+    SignerInfo signerInfo;
+    bool signerVerify;
+    // Refer mixer
+    ReferMixer referMixer;
+    // Money mixer
+    MoneyMixer moneyMixer;
 }
 
 contract Protocol {
+    // Event
     event RequestRefer(address indexed signer);
-    event SendTransactionRequest(address indexed signer, uint256 e);
+    event SendTransactionRequest(
+        address indexed signer,
+        uint256 index,
+        uint256 e
+    );
 
+    // Protocol params
     ProtocolParams params;
-    InitialState initialState;
-    RoundInfo roundInfo;
-    uint256 numberMember;
+    // Deployment phase
     DeploymentState state;
-    SignerInfo signerInfo;
+    InitialState initialState;
+    // All other phases
+    RoundInfo roundInfo;
+
+    // Keep track of member
+    uint256 numberMember;
     mapping(address => bool) members;
-    mapping(address => bool) signerDeposit;
 
-    mapping(uint256 => uint256) referMessage;
-    mapping(address => mapping(uint256 => bool)) distributeMoneyMessage;
-
-    mapping(uint256 => uint256) referSignature;
-    mapping(address => mapping(uint256 => uint256)) distributeMoneySignature;
-    mapping(address => uint256) sendTransactionConfirm;
     // The random number that member send to signer at start of workflow is serve as identify
-    mapping(address => mapping(uint256 => bool)) referIdentify;
+
     /*
     Constructor
     Requirement:
@@ -103,7 +121,7 @@ contract Protocol {
     function bidForNextSigner() public payable {
         require(members[msg.sender]);
         require(msg.value == signerInfo.signerDepositFee);
-        uint256 signIndex = MultiFunctionAccount(msg.sender).getSignIndex();
+        uint256 signIndex = MemberAccount(msg.sender).getSignIndex();
         require(signIndex < signerInfo.nextSignerIndex);
         signerInfo.nextSigner = msg.sender;
         signerInfo.nextSignerIndex = signIndex;
@@ -127,15 +145,16 @@ contract Protocol {
     function startNewRound() public {
         require(roundInfo.isEnd);
         require(signerInfo.nextSignerRegisterEndBlock <= block.timestamp);
+        // Mofidy Signer info state
         signerInfo.nextSignerRegisterEndBlock += roundInfo.roundLong;
-        roundInfo.isEnd = false;
-        roundInfo.roundEnd += roundInfo.roundLong;
         signerInfo.currentSigner = signerInfo.nextSigner;
         signerInfo.nextSigner = address(0);
-        MultiFunctionAccount(signerInfo.nextSigner).increaseSignerIndex(
-            numberMember
-        );
+        MemberAccount(signerInfo.nextSigner).increaseSignerIndex(numberMember);
+        // Modify Round info state
         roundInfo.isEnd = false;
+        roundInfo.roundEnd += roundInfo.roundLong;
+        roundInfo.totalReceiveMoney = 0;
+        roundInfo.totalSendMoney = 0;
     }
 
     /*
@@ -209,7 +228,7 @@ contract Protocol {
                 bs,
                 schSig,
                 msg.sender,
-                MultiFunctionAccount(signerInfo.currentSigner).getSignKey()
+                MemberAccount(signerInfo.currentSigner).getSignKey()
             )
         );
         members[msg.sender] = true;
@@ -219,10 +238,11 @@ contract Protocol {
         Interactive process, need to call from distribution workflow
         This include send blind message only
      */
-    function sendTransaction(uint256 e) public {
+    function sendTransaction(uint256 index, uint256 e) public {
         require(members[msg.sender]);
-        distributeMoneyMessage[msg.sender][e] = true;
-        emit SendTransactionRequest(msg.sender, e);
+        distributeMoneyMessage[msg.sender][e] = index;
+        MemberAccount(msg.sender).processUTXO(index);
+        emit SendTransactionRequest(msg.sender, index, e);
     }
 
     function signTransaction(address account, uint256 r) public {
@@ -246,7 +266,7 @@ contract Protocol {
         require(
             verifyAbeOkamotoSignature(
                 params.ab,
-                MultiFunctionAccount(signerInfo.currentSigner).getSignKey(),
+                MemberAccount(signerInfo.currentSigner).getSignKey(),
                 z,
                 msg.sender,
                 rho,
@@ -258,11 +278,27 @@ contract Protocol {
         sendTransactionConfirm[msg.sender] += money;
     }
 
+    function breakUTXO(uint256 index) public {
+        require(roundInfo.signerVerify);
+        require(members[msg.sender]);
+        require(
+            MemberAccount(msg.sender).getUTXOState(index) == State.InProcess
+        );
+        MemberAccount(msg.sender).lockUTXO(index);
+        // Only get part of it
+        //payable(msg.sender).transfer(MemberAccount(msg.sender).getUTXOValue(index));
+    }
+
     /*
         Unforgery process
         Check the sum of send money and receive money to decide this round is success
      */
-    function verifySigner() public {}
+    function verifySigner() public {
+        require(roundInfo.totalReceiveMoney == roundInfo.totalSendMoney);
+        roundInfo.signerVerify = true;
+    }
 
-    function claimRoundMoney() public {}
+    // function claimRoundMoney() public {
+
+    // }
 }
