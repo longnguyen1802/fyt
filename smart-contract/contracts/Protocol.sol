@@ -200,17 +200,16 @@ contract Protocol {
 
     function startRequestRefer(address account, uint256 nonce) public {
         require(msg.sender == signerInfo.currentSigner);
-        referIdentify[account][nonce] = true;
+        recordReferRequest(referMixer, account, nonce);
     }
 
     function sendReferRequest(uint256 nonce, uint256 e) public {
         require(members[msg.sender]);
-        require(referIdentify[msg.sender][nonce]);
-        referMessage[nonce] = e;
+        recordReferMessage(referMixer, msg.sender, nonce, e);
     }
     function signReferRequest(uint256 nonce, uint256 s) public {
         require(msg.sender == signerInfo.currentSigner);
-        referSignature[nonce] = s;
+        recordReferSignature(referMixer, nonce, s);
     }
     /*
         Onboard newmember to prococol
@@ -218,19 +217,15 @@ contract Protocol {
             Check signature
             Check deposit
             Check timestamp (sign phase end)
-        Create new UTXO for him and save join round
+        Create new MR for him and save join round
      */
     function onboardMember(uint256 e, uint256 s) public {
-        SchnorrSignature memory schSig = SchnorrSignature(e, s);
-        // Check BlindSchnorr Signature
-        require(
-            verifySchnorrSignature(
-                bs,
-                schSig,
-                msg.sender,
-                MemberAccount(signerInfo.currentSigner).getSignKey()
-            )
-        );
+        // Pending check msg.value
+        // Pending add protocol fee
+        // Pending add join fee (Need an special type of MR)
+        uint256 signerPubKey = MemberAccount(signerInfo.currentSigner)
+            .getSignKey();
+        verifyReferSignature(referMixer, msg.sender, signerPubKey, e, s);
         members[msg.sender] = true;
     }
 
@@ -240,12 +235,11 @@ contract Protocol {
      */
     function sendTransaction(uint256 index, uint256 e) public {
         require(members[msg.sender]);
-        distributeMoneyMessage[msg.sender][e] = index;
-        MemberAccount(msg.sender).processUTXO(index);
+        recordSendTransaction(moneyMixer, msg.sender, index, e);
         emit SendTransactionRequest(msg.sender, index, e);
     }
 
-    function signTransaction(address account, uint256 r) public {
+    function signTransaction(address account, uint256 e, uint256 r) public {
         require(msg.sender == signerInfo.currentSigner);
         // Verify signer computation
         distributeMoneySignature[account][e] = r;
@@ -256,26 +250,23 @@ contract Protocol {
     */
     function receiveTransaction(
         uint256 money,
-        uint256 z,
         uint256 rho,
         uint256 delta,
         uint256 omega,
         uint256 sigma
     ) public {
-        require(z == keccak256(abi.encode(money)));
-        require(
-            verifyAbeOkamotoSignature(
-                params.ab,
-                MemberAccount(signerInfo.currentSigner).getSignKey(),
-                z,
-                msg.sender,
-                rho,
-                omega,
-                sigma,
-                delta
-            )
+        uint256 signerPubKey = MemberAccount(signerInfo.currentSigner)
+            .getSignKey();
+        recordReceiveTransaction(
+            moneyMixer,
+            msg.sender,
+            money,
+            rho,
+            delta,
+            omega,
+            sigma,
+            signerPubKey
         );
-        sendTransactionConfirm[msg.sender] += money;
     }
 
     function breakUTXO(uint256 index) public {
