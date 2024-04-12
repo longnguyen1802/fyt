@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 
 struct PhaseControl {
     uint256 numPhase;
@@ -22,7 +22,7 @@ function moveToNextPhase(PhaseControl storage phase, uint256 currentBlock) {
     phase.phaseEndBlock += phase.phaseLength;
 }
 
-function resetPhase(PhaseControl storage phase,uint256 currentBlock) {
+function resetPhase(PhaseControl storage phase, uint256 currentBlock) {
     phase.currentPhase = 1;
     phase.phaseEndBlock = currentBlock + phase.phaseLength;
 }

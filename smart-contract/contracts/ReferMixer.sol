@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 
 import "./BlindSchnorr.sol";
 
@@ -12,15 +12,15 @@ struct ReferMixer {
 }
 
 function recordReferRequest(
-    ReferMixer referMixer,
+    ReferMixer storage referMixer,
     address account,
     uint256 nonce
-) public {
+) {
     referMixer.referIdentify[account][nonce] = true;
 }
 
 function recordReferMessage(
-    ReferMixer referMixer,
+    ReferMixer storage referMixer,
     address account,
     uint256 nonce,
     uint256 e
@@ -30,23 +30,21 @@ function recordReferMessage(
 }
 
 function recordReferSignature(
-    ReferMixer referMixer,
-    uint256nonce,
+    ReferMixer storage referMixer,
+    uint256 nonce,
     uint256 s
-) public {
+) {
     referMixer.referSignature[nonce] = s;
 }
 
 function verifyReferSignature(
-    ReferMixer referMixer,
+    ReferMixer storage referMixer,
     address account,
     uint256 signerPubKey,
     uint256 e,
     uint256 s
-) public {
+) view {
     SchnorrSignature memory schSig = SchnorrSignature(e, s);
     // Check BlindSchnorr Signature
-    require(
-        verifySchnorrSignature(referMixer.bs, schSig, account, signerPubKey)
-    );
+    verifySchnorrSignature(referMixer.bs, schSig, account, signerPubKey);
 }

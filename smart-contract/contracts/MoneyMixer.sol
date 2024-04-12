@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 
 import "./AbeOkamotoPartialBlind.sol";
 import "./MemberAccount.sol";
@@ -21,7 +21,7 @@ function recordSendTransaction(
     address account,
     uint256 index,
     uint256 e
-) public {
+) {
     moneyMixer.distributeMoneyMessage[account][e] = index;
     MemberAccount(account).processUTXO(index);
 }
@@ -31,7 +31,7 @@ function recordSendSignature(
     address account,
     uint256 e,
     uint256 r
-) public {
+) {
     moneyMixer.distributeMoneySignature[account][e] = r;
 }
 
@@ -44,7 +44,7 @@ function recordReceiveTransaction(
     uint256 omega,
     uint256 sigma,
     uint256 signerPubKey
-) public {
+) {
     uint256 z = keccak256(abi.encode(money));
     require(
         verifyAbeOkamotoSignature(

@@ -1,24 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 
-enum State {
-    Initial,
-    Lock,
-    InProcess,
-    Unlock
-}
+import "./Elgama.sol";
+import "./IProtocol.sol";
+import "./IMemberAccount.sol";
 
-struct MR {
-    uint256 money;
-    State state;
-}
-
-struct Rational {
-    uint128 numerator;
-    uint128 denominator;
-}
-
-contract MemberAccount {
+contract MemberAccount is IMemberAccount {
     // Normal account information
     address protocol;
     uint256 sendKey;
@@ -32,6 +19,9 @@ contract MemberAccount {
     uint256 pubKey;
     uint256 signNonce;
     uint256 signIndex;
+
+    // Elgama signature for checking send/receive/refer request
+    Elgama elgama;
 
     constructor(
         uint256 newPubKey,
@@ -83,8 +73,6 @@ contract MemberAccount {
     }
 
     function sendReferRequest() external {}
-
-    function signReferRequest() external {}
 
     function onBoard() external {}
 

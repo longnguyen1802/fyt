@@ -1,60 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 
 import "./MemberAccount.sol";
-import "./BlindSchnorr.sol";
-import "./AbeOkamotoPartialBlind.sol";
-import "./ReferMixer.sol";
-import "./MoneyMixer.sol";
 import "./Signer.sol";
+import "./IProtocol.sol";
 
-struct DeploymentState {
-    bool isDeploymentEnd;
-    uint256 numInitialMember;
-    uint256 endblock;
-    bool firstSignerSetUp;
-}
-
-struct ProtocolParams {
-    // Protocol generator
-    uint256 p;
-    uint256 q;
-    uint256 g;
-    // Random number
-    uint256 Ms;
-    uint256 Md;
-    // Percentage send to parent
-    Rational parentFee;
-    // Encode fee
-    uint256 protocolFee;
-    uint256 joinFee;
-    uint256 signerDepositFee;
-}
-
-struct SignerInfo {
-    address currentSigner;
-    address nextSigner;
-    uint256 nextSignerIndex;
-    uint256 nextSignerRegisterEndBlock;
-    mapping(address => bool) signerDeposit;
-}
-
-struct RoundInfo {
-    // Basic round infomation
-    uint256 number;
-    uint256 roundEnd;
-    uint256 roundLong;
-    bool isEnd;
-    // Signer infomation
-    SignerInfo signerInfo;
-    bool signerVerify;
-    // Refer mixer
-    ReferMixer referMixer;
-    // Money mixer
-    MoneyMixer moneyMixer;
-}
-
-contract Protocol {
+contract Protocol is IProtocol {
     // Event
     event RequestRefer(address indexed signer);
     event SendTransactionRequest(
@@ -274,10 +225,10 @@ contract Protocol {
      * PHASE 3: Send receive request
      * @param money : Amount of money in MR
      * 4 Signatures componnent
-     * @param rho
-     * @param delta
-     * @param omega
-     * @param sigma
+     * @param rho     Part of signature
+     * @param delta   Part of signature
+     * @param omega   Part of signature
+     * @param sigma   Part of signature
      */
     function receiveTransaction(
         uint256 money,

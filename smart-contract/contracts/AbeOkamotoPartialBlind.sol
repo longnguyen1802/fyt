@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "./math/Math.sol";
 
 struct AbeOkamotoBlind {
     uint256 p;
@@ -11,106 +11,98 @@ struct AbeOkamotoBlind {
 }
 
 function prepareMessage(
-    AbeOkamotoBlind ab,
-    uint256 calldata u,
-    uint256 calldata s,
-    uint256 calldata d,
-    uint256 calldata info
-) internal view returns (uint256, uint256) {
-    uint256 z = keccak256(info);
-    uint256 a = Math.expmod(ab.g, u, ab.p);
-    uint256 b = Math.mulmod(
-        Math.expmod(ab.g, s, ab.p),
-        Math.expmod(z, ab.d, ab.p),
+    AbeOkamotoBlind calldata ab,
+    uint256 u,
+    uint256 s,
+    uint256 info
+) view returns (uint256, uint256) {
+    uint256 z = uint256(keccak256(abi.encode(info)));
+    uint256 a = Math.modExp(ab.g, u, ab.p);
+    uint256 b = mulmod(
+        Math.modExp(ab.g, s, ab.p),
+        Math.modExp(z, ab.d, ab.p),
         ab.p
     );
     return (a, b);
 }
 
 function blindMessage(
-    AbeOkamotoBlind ab,
-    uint256 calldata a,
-    uint256 calldata b,
-    uint256 calldata t1,
-    uint256 calldata t2,
-    uint256 calldata t3,
-    uint256 calldata t4,
-    uint256 calldata m,
-    uint256 calldata z,
-    uint256 calldata y
-) internal view returns (uint256) {
-    uint256 alpha = Math.mulmod(
+    AbeOkamotoBlind calldata ab,
+    uint256 a,
+    uint256 b,
+    uint256 t1,
+    uint256 t2,
+    uint256 t3,
+    uint256 t4,
+    uint256 m,
+    uint256 z,
+    uint256 y
+) view returns (uint256) {
+    uint256 alpha = mulmod(
         a,
-        Math.mulmod(
-            Math.expmod(ab.g, t1, ab.p),
-            Math.expmod(y, t2, ab.p),
-            ab.p
-        ),
+        mulmod(Math.modExp(ab.g, t1, ab.p), Math.modExp(y, t2, ab.p), ab.p),
         ab.p
     );
-    uint256 beta = Math.mulmod(
+    uint256 beta = mulmod(
         b,
-        Math.mulmod(
-            Math.expmod(ab.g, t3, ab.p),
-            Math.expmod(z, t4, ab.p),
-            ab.p
-        ),
+        mulmod(Math.modExp(ab.g, t3, ab.p), Math.modExp(z, t4, ab.p), ab.p),
         ab.p
     );
-    uint256 theta = keccak256(abi.encode(alpha, beta, z, m));
-    return Math.mod(theta - t2 - t4, ab.q);
+    uint256 theta = uint256(keccak256(abi.encode(alpha, beta, z, m)));
+    return theta - t2 - (t4 % ab.q);
 }
 
 function signMessage(
-    AbeOkamotoBlind ab,
-    uint256 calldata u,
-    uint256 calldata s,
-    uint256 calldata e,
-    uint256 calldata x
-) internal view returns (uint256, uint256, uint256, uint256) {
-    uint256 c = Math.mod(e - ab.d, ab.q);
-    uint256 r = Math.mod(u - Math.mulmod(c, x, ab.q), ab.q);
+    AbeOkamotoBlind calldata ab,
+    uint256 u,
+    uint256 s,
+    uint256 e,
+    uint256 x
+) pure returns (uint256, uint256, uint256, uint256) {
+    uint256 c = e - (ab.d % ab.q);
+    uint256 r = u - (mulmod(c, x, ab.q) % ab.q);
     return (r, c, s, ab.d);
 }
 
 function unblindMessage(
-    AbeOkamotoBlind ab,
-    uint256 calldata t1,
-    uint256 calldata t2,
-    uint256 calldata t3,
-    uint256 calldata t4,
-    uint256 calldata r,
-    uint256 calldata c,
-    uint256 calldata s,
-    uint256 calldata d
-) internal view returns (uint256, uint256, uint256, uint256) {
-    uint256 rho = Math.mod(r + t1, ab.q);
-    uint256 omega = Math.mod(c + t2, ab.q);
-    uint256 sigma = Math.mod(s + t3, ab.q);
-    uint256 delta = Math.mod(ab.d + t4, ab.q);
+    AbeOkamotoBlind calldata ab,
+    uint256 t1,
+    uint256 t2,
+    uint256 t3,
+    uint256 t4,
+    uint256 r,
+    uint256 c,
+    uint256 s
+) pure returns (uint256, uint256, uint256, uint256) {
+    uint256 rho = (r + (t1 % ab.q));
+    uint256 omega = (c + (t2 % ab.q));
+    uint256 sigma = (s + (t3 % ab.q));
+    uint256 delta = (ab.d + (t4 % ab.q));
     return (rho, omega, sigma, delta);
 }
 
 function verifyAbeOkamotoSignature(
-    AbeOkamotoBlind ab,
-    uint256 calldata y,
-    uint256 calldata z,
+    AbeOkamotoBlind calldata ab,
+    uint256 y,
+    uint256 z,
     address m,
-    uint256 calldata rho,
-    uint256 calldata omega,
-    uint256 calldata sigma,
-    uint256 calldata delta
-) internal view returns (bool) {
-    uint256 checkAlpha = Math.mulmod(
-        Math.expmod(ab.g, rho, ab.p),
-        Math.expmod(y, omega, ab.p),
+    uint256 rho,
+    uint256 omega,
+    uint256 sigma,
+    uint256 delta
+) view {
+    uint256 checkAlpha = mulmod(
+        Math.modExp(ab.g, rho, ab.p),
+        Math.modExp(y, omega, ab.p),
         ab.p
     );
-    uint256 checkBeta = Math.mulmod(
-        Math.expmod(ab.g, sigma, ab.p),
-        Math.expmod(z, delta, ab.p),
+    uint256 checkBeta = mulmod(
+        Math.modExp(ab.g, sigma, ab.p),
+        Math.modExp(z, delta, ab.p),
         ab.p
     );
-    uint245 checkSig = keccak256(abi.encode(checkAlpha, checkBeta, z, m));
-    require(Math.mod(omega + delta, ab.q) == Math.mod(checkSig, ab.q));
+    uint256 checkSig = uint256(
+        keccak256(abi.encode(checkAlpha, checkBeta, z, m))
+    );
+    require((omega + (delta % ab.q)) == (checkSig % ab.q));
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "./math/Math.sol";
 
 struct BlindSchnorrSig {
     // Original Signature
@@ -22,55 +22,58 @@ struct BlindSchnoor {
 }
 
 function blindMessage(
-    BlindSchnoor bs,
-    uint256 calldata r,
-    uint256 calldata alpha,
-    uint256 calldata beta,
-    address calldata m
-) internal view returns (BlindSchnorrSig) {
-    uint256 r0 = Math.mulmod(
+    BlindSchnoor calldata bs,
+    uint256 r,
+    uint256 alpha,
+    uint256 beta,
+    uint256 y,
+    address m
+) view returns (SchnorrSignature memory) {
+    uint256 r0 = mulmod(
         r,
-        Math.mulmod(
-            Math.inverse(Math.modexp(bs.g, alpha, bs.p), bs.p),
-            Math.inverse(Math.modexp(y, beta, bs.p), bs.p),
+        mulmod(
+            Math.invMod(Math.modExp(bs.g, alpha, bs.p), bs.p),
+            Math.invMod(Math.modExp(y, bs.p - 1 - beta, bs.p), bs.p),
             bs.p
-        )
+        ),
+        bs.p
     );
-    uint256 e0 = Math.mod(keccak256(abi.encode(m, r0)), bs.q);
-    return BlindSchnorrSig(e0, Math.mod(e0 + beta, bs.q));
+    y % r;
+    uint256 e0 = uint256(keccak256(abi.encode(m, r0))) % bs.q;
+    return SchnorrSignature(e0, e0 + (beta % bs.q));
 }
 
 function signMessage(
-    BlindSchnoor bs,
-    uint256 calldata prk,
-    uint256 calldata K,
-    uint256 calldata e
-) internal view returns (uint256) {
-    return Math.mod(K + prk * e, bs.q);
+    BlindSchnoor calldata bs,
+    uint256 prk,
+    uint256 K,
+    uint256 e
+) pure returns (uint256) {
+    return K + ((prk * e) % bs.q);
 }
 
 function unblindMessage(
-    BlindSchnoor bs,
-    BlindSig calldata s,
-    uint256 calldata alpha,
-    BlindSig calldata sig
-) public view returns (SchnorrSignature) {
-    return SchnorrSignature(Math.mod(s - alpha, bs.q), sig.e0);
+    BlindSchnoor calldata bs,
+    uint256 s,
+    uint256 alpha,
+    uint256 e0
+) pure returns (SchnorrSignature memory) {
+    return SchnorrSignature((s - alpha) % bs.q, e0);
 }
 
 function verifySchnorrSignature(
-    BlindSchnoor bs,
-    Signature calldata sig,
-    address calldata m,
-    uint256 calldata pk
-) public returns (bool) {
+    BlindSchnoor storage bs,
+    SchnorrSignature memory sig,
+    address m,
+    uint256 pk
+) view {
     uint256 verifyFactor = mulmod(
-        Math.modexp(bs.g, sig.s0, bs.q),
-        Math.modexp(pk, sig.e0, bs.q),
+        Math.modExp(bs.g, sig.s0, bs.q),
+        Math.modExp(pk, sig.e0, bs.q),
         bs.q
     );
     require(
-        Math.mod(sig.e0, bs.q) ==
-            Math.mode(keccak256(abi.encode(m, verifyFactor)), bs.q)
+        (sig.e0 % bs.q) ==
+            uint256(keccak256(abi.encode(m, verifyFactor))) % bs.q
     );
 }
