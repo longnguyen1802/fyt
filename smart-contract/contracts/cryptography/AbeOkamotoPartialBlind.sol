@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./math/Math.sol";
+import "../math/Math.sol";
 
 struct AbeOkamotoBlind {
     uint256 p;
@@ -82,7 +82,7 @@ function unblindMessage(
 }
 
 function verifyAbeOkamotoSignature(
-    AbeOkamotoBlind calldata ab,
+    AbeOkamotoBlind storage ab,
     uint256 y,
     uint256 z,
     address m,

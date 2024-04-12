@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./math/Math.sol";
-import "./ReferMixer.sol";
-import "./MoneyMixer.sol";
+import "../math/Math.sol";
+import "../mixer/ReferMixer.sol";
+import "../mixer/MoneyMixer.sol";
 
 interface IProtocol {
     struct DeploymentState {

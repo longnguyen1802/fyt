@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./Elgama.sol";
-import "./IProtocol.sol";
-import "./IMemberAccount.sol";
+import "../cryptography/Elgama.sol";
+import "../interfaces/IProtocol.sol";
+import "../interfaces/IMemberAccount.sol";
 
 contract MemberAccount is IMemberAccount {
     // Normal account information
@@ -91,4 +91,5 @@ contract MemberAccount is IMemberAccount {
     function bidSigner() external {}
 
     function claimRefundSigner() external {}
+
 }

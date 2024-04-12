@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.20;
 
-import "./BlindSchnorr.sol";
+import "../cryptography/BlindSchnorr.sol";
 
 struct ReferMixer {
     BlindSchnoor bs;

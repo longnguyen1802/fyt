@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./math/Math.sol";
+import "../math/Math.sol";
 
 struct BlindSchnorrSig {
     // Original Signature

@@ -1,22 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./MemberAccount.sol";
-
-struct SignerInfo {
-    address currentSigner;
-    address nextSigner;
-    uint256 nextSignerIndex;
-    uint256 nextSignerRegisterEndBlock;
-    mapping(address => bool) signerDeposit;
-}
+import "../interfaces/IMemberAccount.sol";
+import "../interfaces/IProtocol.sol";
 
 function getSignerSignKey(address signer) view returns (uint256) {
-    return MemberAccount(signer).getSignKey();
+    return IMemberAccount(signer).getSignKey();
 }
 
 function recordBidForSigner(
-    SignerInfo storage signerInfo,
+    IProtocol.SignerInfo storage signerInfo,
     address account,
     uint256 signIndex
 ) {
@@ -27,7 +20,7 @@ function recordBidForSigner(
 }
 
 function removeUnsuccessRegister(
-    SignerInfo storage signerInfo,
+    IProtocol.SignerInfo storage signerInfo,
     address account
 ) {
     require(signerInfo.signerDeposit[account]);

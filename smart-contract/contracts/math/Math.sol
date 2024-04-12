@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/math/Math.sol)
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 import {Panic} from "./Panic.sol";
 import {SafeCast} from "./SafeCast.sol";
 
 struct Rational {
-    uint128 numerator;
-    uint128 denominator;
+    uint256 numerator;
+    uint256 denominator;
 }
 
 /**

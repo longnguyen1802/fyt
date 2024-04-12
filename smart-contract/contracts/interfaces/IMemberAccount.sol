@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-interface IMemberAccount {
-    enum State {
+enum State {
         Initial,
         Lock,
         InProcess,
         Unlock
     }
-
+interface IMemberAccount {
     struct MR {
         uint256 money;
         State state;

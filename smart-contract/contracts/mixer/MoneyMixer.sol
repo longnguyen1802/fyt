@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.20;
 
-import "./AbeOkamotoPartialBlind.sol";
-import "./MemberAccount.sol";
+import "../cryptography/AbeOkamotoPartialBlind.sol";
+import "../interfaces/IMemberAccount.sol";
 
 struct MoneyMixer {
     AbeOkamotoBlind ab;
@@ -17,17 +17,17 @@ struct MoneyMixer {
 }
 
 function recordSendTransaction(
-    MoneyMixer moneyMixer,
+    MoneyMixer storage moneyMixer,
     address account,
     uint256 index,
     uint256 e
 ) {
     moneyMixer.distributeMoneyMessage[account][e] = index;
-    MemberAccount(account).processUTXO(index);
+    IMemberAccount(account).processMR(index);
 }
 
 function recordSendSignature(
-    MoneyMixer moneyMixer,
+    MoneyMixer storage moneyMixer,
     address account,
     uint256 e,
     uint256 r
@@ -36,7 +36,7 @@ function recordSendSignature(
 }
 
 function recordReceiveTransaction(
-    MoneyMixer moneyMixer,
+    MoneyMixer storage moneyMixer,
     address account,
     uint256 money,
     uint256 rho,
@@ -45,19 +45,18 @@ function recordReceiveTransaction(
     uint256 sigma,
     uint256 signerPubKey
 ) {
-    uint256 z = keccak256(abi.encode(money));
-    require(
-        verifyAbeOkamotoSignature(
-            moneyMixer.ab,
-            signerPubKey,
-            z,
-            account,
-            rho,
-            omega,
-            sigma,
-            delta
-        )
+    uint256 z = uint256(keccak256(abi.encode(money)));
+    verifyAbeOkamotoSignature(
+        moneyMixer.ab,
+        signerPubKey,
+        z,
+        account,
+        rho,
+        omega,
+        sigma,
+        delta
     );
+    
     moneyMixer.sendTransactionConfirm[account] += money;
     moneyMixer.totalReceiveMoney += money;
 }

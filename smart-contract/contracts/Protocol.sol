@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./MemberAccount.sol";
-import "./Signer.sol";
-import "./IProtocol.sol";
+import "./account/Signer.sol";
+import "./interfaces/IProtocol.sol";
+import "./interfaces/IMemberAccount.sol";
 
 contract Protocol is IProtocol {
     // Event
@@ -64,8 +64,8 @@ contract Protocol is IProtocol {
      */
 
     function initialMemberRegister() public payable {
-        require(msg.value >= params.initalMemberFee);
-        require(block.timestamp <= state.deployTimeEnd);
+        require(msg.value >= params.protocolFee);
+        require(block.timestamp <= deployState.endblock);
         // Need to check interface (later)
         members[msg.sender] = true;
         deployState.numInitialMember++;
@@ -78,7 +78,7 @@ contract Protocol is IProtocol {
     End the initial state
      */
     function closeDeploymentState() public {
-        require(block.timestamp > state.deployTimeEnd);
+        require(block.timestamp > deployState.endblock);
         deployState.isDeploymentEnd = true;
     }
 
@@ -92,14 +92,14 @@ contract Protocol is IProtocol {
 
     function bidForNextSigner() public payable {
         require(members[msg.sender]);
-        require(msg.value == signerInfo.signerDepositFee);
-        uint256 signIndex = MemberAccount(msg.sender).getSignIndex();
-        recordBidForSigner(signerInfo, account, signIndex);
+        require(msg.value == params.signerDepositFee);
+        uint256 signIndex = IMemberAccount(msg.sender).getSignIndex();
+        recordBidForSigner(roundInfo.signerInfo, msg.sender, signIndex);
     }
 
     function refundUnsuccessSigner() public {
         require(members[msg.sender]);
-        removeUnsuccessRegister(signerInfo, msg.sender);
+        removeUnsuccessRegister(roundInfo.signerInfo, msg.sender);
         //payable(msg.sender).transfer();
     }
 
@@ -111,17 +111,17 @@ contract Protocol is IProtocol {
      */
     function startNewRound() public {
         require(roundInfo.isEnd);
-        require(signerInfo.nextSignerRegisterEndBlock <= block.timestamp);
+        require(roundInfo.signerInfo.nextSignerRegisterEndBlock <= block.timestamp);
         // Mofidy Signer info state
-        signerInfo.nextSignerRegisterEndBlock += roundInfo.roundLong;
-        signerInfo.currentSigner = signerInfo.nextSigner;
-        signerInfo.nextSigner = address(0);
-        MemberAccount(signerInfo.nextSigner).increaseSignerIndex(numberMember);
+        roundInfo.signerInfo.nextSignerRegisterEndBlock += roundInfo.roundLong;
+        roundInfo.signerInfo.currentSigner = roundInfo.signerInfo.nextSigner;
+        roundInfo.signerInfo.nextSigner = address(0);
+        IMemberAccount(roundInfo.signerInfo.nextSigner).increaseSignerIndex(numberMember);
         // Modify Round info state
         roundInfo.isEnd = false;
         roundInfo.roundEnd += roundInfo.roundLong;
-        roundInfo.totalReceiveMoney = 0;
-        roundInfo.totalSendMoney = 0;
+        roundInfo.moneyMixer.totalReceiveMoney = 0;
+        roundInfo.moneyMixer.totalSendMoney = 0;
     }
 
     /*
@@ -134,7 +134,7 @@ contract Protocol is IProtocol {
     function endRound() public {
         require(roundInfo.roundEnd <= block.timestamp);
         require(roundInfo.isEnd == false);
-        signerDeposit[signerInfo.currentSigner] = false;
+        roundInfo.signerInfo.signerDeposit[roundInfo.signerInfo.currentSigner] = false;
         // Decide cheat signer
         // Increase signer index if cheat
         // Refund if not cheat;
@@ -156,8 +156,8 @@ contract Protocol is IProtocol {
      * @param nonce Public nonce generate by Signer
      */
     function startRequestRefer(address account, uint256 nonce) public {
-        require(msg.sender == signerInfo.currentSigner);
-        recordReferRequest(referMixer, account, nonce);
+        require(msg.sender == roundInfo.signerInfo.currentSigner);
+        recordReferRequest(roundInfo.referMixer, account, nonce);
     }
 
     /**
@@ -167,7 +167,7 @@ contract Protocol is IProtocol {
      */
     function sendReferRequest(uint256 nonce, uint256 e) public {
         require(members[msg.sender]);
-        recordReferMessage(referMixer, msg.sender, nonce, e);
+        recordReferMessage(roundInfo.referMixer, msg.sender, nonce, e);
     }
     /**
      * STEP 3: Signer sign the refer message
@@ -175,8 +175,8 @@ contract Protocol is IProtocol {
      * @param s     : Refer signature
      */
     function signReferRequest(uint256 nonce, uint256 s) public {
-        require(msg.sender == signerInfo.currentSigner);
-        recordReferSignature(referMixer, nonce, s);
+        require(msg.sender == roundInfo.signerInfo.currentSigner);
+        recordReferSignature(roundInfo.referMixer, nonce, s);
     }
 
     /**
@@ -188,9 +188,9 @@ contract Protocol is IProtocol {
         // Pending check msg.value
         // Pending add protocol fee
         // Pending add join fee (Need an special type of MR)
-        uint256 signerPubKey = MemberAccount(signerInfo.currentSigner)
+        uint256 signerPubKey = IMemberAccount(roundInfo.signerInfo.currentSigner)
             .getSignKey();
-        verifyReferSignature(referMixer, msg.sender, signerPubKey, e, s);
+        verifyReferSignature(roundInfo.referMixer, msg.sender, signerPubKey, e, s);
         members[msg.sender] = true;
     }
 
@@ -205,7 +205,7 @@ contract Protocol is IProtocol {
      */
     function sendTransaction(uint256 index, uint256 e) public {
         require(members[msg.sender]);
-        recordSendTransaction(moneyMixer, msg.sender, index, e);
+        recordSendTransaction(roundInfo.moneyMixer, msg.sender, index, e);
         emit SendTransactionRequest(msg.sender, index, e);
     }
 
@@ -216,9 +216,9 @@ contract Protocol is IProtocol {
      * @param r : Signature sign by signer
      */
     function signTransaction(address account, uint256 e, uint256 r) public {
-        require(msg.sender == signerInfo.currentSigner);
+        require(msg.sender == roundInfo.signerInfo.currentSigner);
         // Verify signer computation
-        distributeMoneySignature[account][e] = r;
+       roundInfo.moneyMixer.distributeMoneySignature[account][e] = r;
     }
 
     /**
@@ -237,10 +237,10 @@ contract Protocol is IProtocol {
         uint256 omega,
         uint256 sigma
     ) public {
-        uint256 signerPubKey = MemberAccount(signerInfo.currentSigner)
+        uint256 signerPubKey = IMemberAccount(roundInfo.signerInfo.currentSigner)
             .getSignKey();
         recordReceiveTransaction(
-            moneyMixer,
+            roundInfo.moneyMixer,
             msg.sender,
             money,
             rho,
@@ -255,7 +255,7 @@ contract Protocol is IProtocol {
      * PHASE 4: Validity check
      */
     function verifySigner() public {
-        require(roundInfo.totalReceiveMoney == roundInfo.totalSendMoney);
+        require(roundInfo.moneyMixer.totalReceiveMoney == roundInfo.moneyMixer.totalSendMoney);
         roundInfo.signerVerify = true;
     }
 
@@ -263,9 +263,9 @@ contract Protocol is IProtocol {
         require(roundInfo.signerVerify);
         require(members[msg.sender]);
         require(
-            MemberAccount(msg.sender).getUTXOState(index) == State.InProcess
+            IMemberAccount(msg.sender).getMoneyRecordState(index) == State.InProcess
         );
-        MemberAccount(msg.sender).lockUTXO(index);
+        IMemberAccount(msg.sender).lockMR(index);
         // Only get part of it
         //payable(msg.sender).transfer(MemberAccount(msg.sender).getUTXOValue(index));
     }

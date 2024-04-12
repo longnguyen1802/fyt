@@ -1,0 +1,556 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/Protocol.sol": {
+      "lastModificationDate": 1712954541804,
+      "contentHash": "04126117531e47b3720fa54192f62df3",
+      "sourceName": "contracts/Protocol.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./account/Signer.sol",
+        "./interfaces/IProtocol.sol",
+        "./interfaces/IMemberAccount.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": [
+        "Protocol"
+      ]
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/account/Signer.sol": {
+      "lastModificationDate": 1712954108878,
+      "contentHash": "c6e5ec523bc5a4982097801ff47d5dc6",
+      "sourceName": "contracts/account/Signer.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IMemberAccount.sol",
+        "../interfaces/IProtocol.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": []
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/interfaces/IProtocol.sol": {
+      "lastModificationDate": 1712952988415,
+      "contentHash": "399f99b9465307d71d3bce8aef195a23",
+      "sourceName": "contracts/interfaces/IProtocol.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../math/Math.sol",
+        "../mixer/ReferMixer.sol",
+        "../mixer/MoneyMixer.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": [
+        "IProtocol"
+      ]
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/interfaces/IMemberAccount.sol": {
+      "lastModificationDate": 1712954262530,
+      "contentHash": "ce01da8478947c5e3c85ca0dc41692f1",
+      "sourceName": "contracts/interfaces/IMemberAccount.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": [
+        "IMemberAccount"
+      ]
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/math/Math.sol": {
+      "lastModificationDate": 1712954577568,
+      "contentHash": "231eb87068040e9446f620b2854f4a0e",
+      "sourceName": "contracts/math/Math.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Panic.sol",
+        "./SafeCast.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": [
+        "Math"
+      ]
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/mixer/ReferMixer.sol": {
+      "lastModificationDate": 1712953224012,
+      "contentHash": "50cb87a054ff87865c20e6f08d81d518",
+      "sourceName": "contracts/mixer/ReferMixer.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../cryptography/BlindSchnorr.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": []
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/mixer/MoneyMixer.sol": {
+      "lastModificationDate": 1712954521944,
+      "contentHash": "8cb7ecfdcb74787a5d925cc52930d993",
+      "sourceName": "contracts/mixer/MoneyMixer.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../cryptography/AbeOkamotoPartialBlind.sol",
+        "../interfaces/IMemberAccount.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": []
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/math/Panic.sol": {
+      "lastModificationDate": 1712954579160,
+      "contentHash": "8fdbc6cf2999680cdfd60444cc294ee0",
+      "sourceName": "contracts/math/Panic.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": [
+        "Panic"
+      ]
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/math/SafeCast.sol": {
+      "lastModificationDate": 1712952624135,
+      "contentHash": "6a44339a6a9b4f733db339c47a85a22d",
+      "sourceName": "contracts/math/SafeCast.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "SafeCast"
+      ]
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/cryptography/BlindSchnorr.sol": {
+      "lastModificationDate": 1712952772408,
+      "contentHash": "9a2de81771c032eeed01379c8f811d1e",
+      "sourceName": "contracts/cryptography/BlindSchnorr.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../math/Math.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": []
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/cryptography/AbeOkamotoPartialBlind.sol": {
+      "lastModificationDate": 1712953192447,
+      "contentHash": "eb3adc9e44e8d02a0842373ccf65083d",
+      "sourceName": "contracts/cryptography/AbeOkamotoPartialBlind.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../math/Math.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": []
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/account/MemberAccount.sol": {
+      "lastModificationDate": 1712954267688,
+      "contentHash": "6f5c518653c0a105f74047f12a352ac4",
+      "sourceName": "contracts/account/MemberAccount.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../cryptography/Elgama.sol",
+        "../interfaces/IProtocol.sol",
+        "../interfaces/IMemberAccount.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": [
+        "MemberAccount"
+      ]
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/cryptography/Elgama.sol": {
+      "lastModificationDate": 1712952776836,
+      "contentHash": "851695adb31a85d75b05851ea3eb5532",
+      "sourceName": "contracts/cryptography/Elgama.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../math/Math.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": []
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/artifacts/Math.sol": {
+      "lastModificationDate": 1712952624172,
+      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "sourceName": "contracts/artifacts/Math.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [],
+      "artifacts": []
+    },
+    "/Users/mahiru/Desktop/doc/fyt/fyt/smart-contract/contracts/utilities/Time.sol": {
+      "lastModificationDate": 1712952899277,
+      "contentHash": "31d232cc887a5a34178806ebbd895e18",
+      "sourceName": "contracts/utilities/Time.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": []
+    }
+  }
+}
