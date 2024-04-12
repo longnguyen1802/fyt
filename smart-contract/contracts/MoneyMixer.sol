@@ -4,6 +4,7 @@ pragma solidity 0.8.13;
 
 import "./AbeOkamotoPartialBlind.sol";
 import "./MemberAccount.sol";
+
 struct MoneyMixer {
     AbeOkamotoBlind ab;
     mapping(address => mapping(uint256 => uint256)) distributeMoneyMessage;

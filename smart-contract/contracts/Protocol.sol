@@ -6,6 +6,7 @@ import "./BlindSchnorr.sol";
 import "./AbeOkamotoPartialBlind.sol";
 import "./ReferMixer.sol";
 import "./MoneyMixer.sol";
+import "./Signer.sol";
 
 struct DeploymentState {
     bool isDeploymentEnd;
@@ -122,19 +123,13 @@ contract Protocol {
         require(members[msg.sender]);
         require(msg.value == signerInfo.signerDepositFee);
         uint256 signIndex = MemberAccount(msg.sender).getSignIndex();
-        require(signIndex < signerInfo.nextSignerIndex);
-        signerInfo.nextSigner = msg.sender;
-        signerInfo.nextSignerIndex = signIndex;
-        signerDeposit[msg.sender] = true;
+        recordBidForSigner(signerInfo, account, signIndex);
     }
 
     function refundUnsuccessSigner() public {
         require(members[msg.sender]);
-        require(signerDeposit[msg.sender]);
-        require(signerInfo.currentSigner != msg.sender);
-        require(signerInfo.nextSigner != msg.sender);
-        signerDeposit[msg.sender] = false;
-        payable(msg.sender).transfer(signerInfo.signerDepositFee);
+        removeUnsuccessRegister(signerInfo, msg.sender);
+        //payable(msg.sender).transfer();
     }
 
     /*
@@ -190,34 +185,48 @@ contract Protocol {
     */
     function endSignPhase() public {}
 
+    /*  REFER WORKFLOW */
+
     /*
-        Inner member send request to refer new member
+        STEP 1: Inner member send request to refer new member
      */
     function requestRefer() public {
         require(members[msg.sender]);
         emit RequestRefer(msg.sender);
     }
-
+    /**
+     *
+     * @param account Address of member that want to make a refer
+     * @param nonce Public nonce generate by Signer
+     */
     function startRequestRefer(address account, uint256 nonce) public {
         require(msg.sender == signerInfo.currentSigner);
         recordReferRequest(referMixer, account, nonce);
     }
 
+    /**
+     * STEP 2: Signer generate nonce
+     * @param nonce : Public nonce generate by signer
+     * @param e :     Refer message (Blind)
+     */
     function sendReferRequest(uint256 nonce, uint256 e) public {
         require(members[msg.sender]);
         recordReferMessage(referMixer, msg.sender, nonce, e);
     }
+    /**
+     * STEP 3: Signer sign the refer message
+     * @param nonce : Public nonce generate by signer
+     * @param s     : Refer signature
+     */
     function signReferRequest(uint256 nonce, uint256 s) public {
         require(msg.sender == signerInfo.currentSigner);
         recordReferSignature(referMixer, nonce, s);
     }
-    /*
-        Onboard newmember to prococol
-        Requirements:
-            Check signature
-            Check deposit
-            Check timestamp (sign phase end)
-        Create new MR for him and save join round
+
+    /**
+     * STEP 4: Verification and onboard new member
+     * @param e : Original message
+     * @param s : Signature
      */
     function onboardMember(uint256 e, uint256 s) public {
         // Pending check msg.value
@@ -229,9 +238,14 @@ contract Protocol {
         members[msg.sender] = true;
     }
 
-    /*
-        Interactive process, need to call from distribution workflow
-        This include send blind message only
+    /* 
+        DISTRIBUTION MONEY WORKFLOW
+     */
+
+    /**
+     * PHASE 1: Send transaction request
+     * @param index : Index of the MR
+     * @param e : Blind message
      */
     function sendTransaction(uint256 index, uint256 e) public {
         require(members[msg.sender]);
@@ -239,15 +253,27 @@ contract Protocol {
         emit SendTransactionRequest(msg.sender, index, e);
     }
 
+    /**
+     * PHASE 2: Signer sign the transaction send request
+     * @param account : Address of the account send transaction
+     * @param e : Blind message
+     * @param r : Signature sign by signer
+     */
     function signTransaction(address account, uint256 e, uint256 r) public {
         require(msg.sender == signerInfo.currentSigner);
         // Verify signer computation
         distributeMoneySignature[account][e] = r;
     }
-    /*
-        Provide signature for receive money
-        Require sign process end
-    */
+
+    /**
+     * PHASE 3: Send receive request
+     * @param money : Amount of money in MR
+     * 4 Signatures componnent
+     * @param rho
+     * @param delta
+     * @param omega
+     * @param sigma
+     */
     function receiveTransaction(
         uint256 money,
         uint256 rho,
@@ -269,6 +295,14 @@ contract Protocol {
         );
     }
 
+    /**
+     * PHASE 4: Validity check
+     */
+    function verifySigner() public {
+        require(roundInfo.totalReceiveMoney == roundInfo.totalSendMoney);
+        roundInfo.signerVerify = true;
+    }
+
     function breakUTXO(uint256 index) public {
         require(roundInfo.signerVerify);
         require(members[msg.sender]);
@@ -284,10 +318,6 @@ contract Protocol {
         Unforgery process
         Check the sum of send money and receive money to decide this round is success
      */
-    function verifySigner() public {
-        require(roundInfo.totalReceiveMoney == roundInfo.totalSendMoney);
-        roundInfo.signerVerify = true;
-    }
 
     // function claimRoundMoney() public {
 

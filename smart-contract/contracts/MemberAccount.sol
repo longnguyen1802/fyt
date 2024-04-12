@@ -2,19 +2,20 @@
 pragma solidity 0.8.13;
 
 enum State {
+    Initial,
     Lock,
     InProcess,
     Unlock
 }
 
+struct MR {
+    uint256 money;
+    State state;
+}
+
 struct Rational {
     uint128 numerator;
     uint128 denominator;
-}
-
-struct URT {
-    uint256 money;
-    State state;
 }
 
 contract MemberAccount {
@@ -25,7 +26,7 @@ contract MemberAccount {
 
     // Money record
     uint256 totalURT;
-    mapping(uint256 => URT) moneyRecord;
+    mapping(uint256 => MR) moneyRecord;
 
     // Sender support information
     uint256 pubKey;
@@ -56,28 +57,28 @@ contract MemberAccount {
         return pubKey;
     }
 
-    function processURT(uint256 index) external {
+    function processMR(uint256 index) external {
         require(msg.sender == protocol);
         require(moneyRecord[index].state == State.Lock);
         moneyRecord[index].state = State.InProcess;
     }
 
-    function lockURT(uint256 index) external {
+    function lockMR(uint256 index) external {
         require(msg.sender == protocol);
         moneyRecord[index].state = State.InProcess;
     }
 
-    function unlockURT(uint256 index) external {
+    function unlockMR(uint256 index) external {
         require(msg.sender == protocol);
         require(moneyRecord[index].state == State.InProcess);
         moneyRecord[index].state = State.Unlock;
     }
 
-    function getmoneyRecordtate(uint256 index) public view returns (State) {
+    function getMoneyRecordState(uint256 index) public view returns (State) {
         return moneyRecord[index].state;
     }
 
-    function getURTValue(uint256 index) public view returns (uint256) {
+    function getMRValue(uint256 index) public view returns (uint256) {
         return moneyRecord[index].money;
     }
 
