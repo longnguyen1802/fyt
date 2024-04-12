@@ -10,7 +10,9 @@ import "./Signer.sol";
 
 struct DeploymentState {
     bool isDeploymentEnd;
-    uint256 deployTimeEnd;
+    uint256 numInitialMember;
+    uint256 endblock;
+    bool firstSignerSetUp;
 }
 
 struct ProtocolParams {
@@ -27,11 +29,6 @@ struct ProtocolParams {
     uint256 protocolFee;
     uint256 joinFee;
     uint256 signerDepositFee;
-}
-
-struct InitialState {
-    uint256 endblock;
-    bool isEnd;
 }
 
 struct SignerInfo {
@@ -66,11 +63,11 @@ contract Protocol {
         uint256 e
     );
 
+    // ************************************************** PROTOCOL ATTRIBUTE ***********************************************
     // Protocol params
     ProtocolParams params;
     // Deployment phase
-    DeploymentState state;
-    InitialState initialState;
+    DeploymentState deployState;
     // All other phases
     RoundInfo roundInfo;
 
@@ -78,16 +75,36 @@ contract Protocol {
     uint256 numberMember;
     mapping(address => bool) members;
 
-    // The random number that member send to signer at start of workflow is serve as identify
-
     /*
-    Constructor
-    Requirement:
-        Set up protocol parameter
-        Set up end block for initial member register
+        Constructor
+        Set up all protocol parameters
      */
-    constructor() {}
+    constructor(
+        uint256 _p,
+        uint256 _q,
+        uint256 _g,
+        uint256 _Ms,
+        uint256 _Md,
+        uint256 numeParentFee,
+        uint256 demoParentFee,
+        uint256 _protocolFee,
+        uint256 _joinFee,
+        uint256 _signerDepositFee
+    ) {
+        params = ProtocolParams(
+            _p,
+            _q,
+            _g,
+            _Ms,
+            _Md,
+            Rational(numeParentFee, demoParentFee),
+            _protocolFee,
+            _joinFee,
+            _signerDepositFee
+        );
+    }
 
+    /********************************  DEPLOYMENT PHASE *********************************/
     /*
     Register for initial member
     Check timestamp
@@ -100,6 +117,7 @@ contract Protocol {
         require(block.timestamp <= state.deployTimeEnd);
         // Need to check interface (later)
         members[msg.sender] = true;
+        deployState.numInitialMember++;
     }
 
     /*
@@ -110,15 +128,17 @@ contract Protocol {
      */
     function closeDeploymentState() public {
         require(block.timestamp > state.deployTimeEnd);
-        state.isDeploymentEnd = true;
+        deployState.isDeploymentEnd = true;
     }
 
+    /************************************ Signer Rotation Flow *****************************************/
     /*  Bid to become next signer
         Requirement :
             Account not being banned for signer (Caught cheat previously)
             Chose the smallest Index
             Increase the index of member being chose by current number member
      */
+
     function bidForNextSigner() public payable {
         require(members[msg.sender]);
         require(msg.value == signerInfo.signerDepositFee);
@@ -132,6 +152,7 @@ contract Protocol {
         //payable(msg.sender).transfer();
     }
 
+    /****************************************** MAIN FLOW DO ROUND BY ROUND *****************************/
     /*
         Start a new round with new signer and allow for bid next signer 
         Requirement:
@@ -168,22 +189,6 @@ contract Protocol {
         // Refund if not cheat;
         roundInfo.isEnd = true;
     }
-
-    /*
-        End the send phase and noone can send in current round after this
-        Requirements:
-            Timestamp require
-    */
-    function endSendPhase() public {}
-
-    /*
-        End the send phase and noone can send in current round after this
-        Requirements:
-            Timestamp require
-            Check signer requirement
-            Define chear signer
-    */
-    function endSignPhase() public {}
 
     /*  REFER WORKFLOW */
 
