@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "analyze:slither": "slither . --filter-paths math --exclude-informational",
+    "analyze:mythril": "myth analyze ./contracts/Protocol.sol ./contract/account/MemberAccount.sol",
+    "lint": "npx prettier --write --plugin=prettier-plugin-solidity contracts/**/*.sol"
   },
   "author": "",
   "license": "ISC",

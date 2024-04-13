@@ -4,8 +4,8 @@ pragma solidity 0.8.20;
 import "./account/Signer.sol";
 import "./interfaces/IProtocol.sol";
 import "./interfaces/IMemberAccount.sol";
-
-contract Protocol is IProtocol {
+import "./utilities/ReentrancyGuard.sol";
+contract Protocol is IProtocol,ReentrancyGuard {
     // Event
     event RequestRefer(address indexed signer);
     event SendTransactionRequest(
@@ -40,7 +40,8 @@ contract Protocol is IProtocol {
         uint256 demoParentFee,
         uint256 _protocolFee,
         uint256 _joinFee,
-        uint256 _signerDepositFee
+        uint256 _signerDepositFee,
+        uint256 deploymentLength
     ) {
         params = ProtocolParams(
             _p,
@@ -53,6 +54,16 @@ contract Protocol is IProtocol {
             _joinFee,
             _signerDepositFee
         );
+
+        deployState = DeploymentState(
+            false,
+            0,
+            block.number + deploymentLength,
+            false
+        );
+
+        numberMember = 0;
+
     }
 
     /********************************  DEPLOYMENT PHASE *********************************/
@@ -65,7 +76,7 @@ contract Protocol is IProtocol {
 
     function initialMemberRegister() public payable {
         require(msg.value >= params.protocolFee);
-        require(block.timestamp <= deployState.endblock);
+        require(block.number <= deployState.endblock);
         // Need to check interface (later)
         members[msg.sender] = true;
         deployState.numInitialMember++;
@@ -78,7 +89,7 @@ contract Protocol is IProtocol {
     End the initial state
      */
     function closeDeploymentState() public {
-        require(block.timestamp > deployState.endblock);
+        require(block.number > deployState.endblock);
         deployState.isDeploymentEnd = true;
     }
 
@@ -100,7 +111,7 @@ contract Protocol is IProtocol {
     function refundUnsuccessSigner() public {
         require(members[msg.sender]);
         removeUnsuccessRegister(roundInfo.signerInfo, msg.sender);
-        //payable(msg.sender).transfer();
+        payable(msg.sender).transfer(params.signerDepositFee);
     }
 
     /****************************************** MAIN FLOW DO ROUND BY ROUND *****************************/
@@ -112,20 +123,20 @@ contract Protocol is IProtocol {
     function startNewRound() public {
         require(roundInfo.isEnd);
         require(
-            roundInfo.signerInfo.nextSignerRegisterEndBlock <= block.timestamp
+            roundInfo.signerInfo.nextSignerRegisterEndBlock <= block.number
         );
         // Mofidy Signer info state
         roundInfo.signerInfo.nextSignerRegisterEndBlock += roundInfo.roundLong;
         roundInfo.signerInfo.currentSigner = roundInfo.signerInfo.nextSigner;
         roundInfo.signerInfo.nextSigner = address(0);
-        IMemberAccount(roundInfo.signerInfo.nextSigner).increaseSignerIndex(
-            numberMember
-        );
         // Modify Round info state
         roundInfo.isEnd = false;
         roundInfo.roundEnd += roundInfo.roundLong;
         roundInfo.moneyMixer.totalReceiveMoney = 0;
         roundInfo.moneyMixer.totalSendMoney = 0;
+        IMemberAccount(roundInfo.signerInfo.nextSigner).increaseSignerIndex(
+            numberMember
+        );
     }
 
     /*
@@ -136,7 +147,7 @@ contract Protocol is IProtocol {
             Refund for signer
      */
     function endRound() public {
-        require(roundInfo.roundEnd <= block.timestamp);
+        require(roundInfo.roundEnd <= block.number);
         require(roundInfo.isEnd == false);
         roundInfo.signerInfo.signerDeposit[
             roundInfo.signerInfo.currentSigner
@@ -205,6 +216,7 @@ contract Protocol is IProtocol {
             s
         );
         members[msg.sender] = true;
+        numberMember+=1;
     }
 
     /* 
@@ -218,8 +230,8 @@ contract Protocol is IProtocol {
      */
     function sendTransaction(uint256 index, uint256 e) public {
         require(members[msg.sender]);
-        recordSendTransaction(roundInfo.moneyMixer, msg.sender, index, e);
         emit SendTransactionRequest(msg.sender, index, e);
+        recordSendTransaction(roundInfo.moneyMixer, msg.sender, index, e);
     }
 
     /**

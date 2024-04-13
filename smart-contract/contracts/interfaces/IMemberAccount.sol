@@ -30,21 +30,16 @@ interface IMemberAccount {
     function sendReferRequest(
         uint256 nonce,
         uint256 e,
-        uint256 sig_r,
-        uint256 sig_s
+        uint256 sigR,
+        uint256 sigS
     ) external;
-    function onBoard(
-        uint256 e,
-        uint256 s,
-        uint256 sig_r,
-        uint256 sig_s
-    ) external;
+    function onBoard(uint256 e, uint256 s, uint256 sigR, uint256 sigS) external;
 
     function sendTransaction(
         uint256 index,
         uint256 e,
-        uint256 sig_r,
-        uint256 sig_s
+        uint256 sigR,
+        uint256 sigS
     ) external;
     function receiveTransaction(
         uint256 money,
@@ -52,16 +47,16 @@ interface IMemberAccount {
         uint256 delta,
         uint256 omega,
         uint256 sigma,
-        uint256 sig_r,
-        uint256 sig_s
+        uint256 sigR,
+        uint256 sigS
     ) external;
 
     function signTransaction(
         address account,
         uint256 e,
         uint256 r,
-        uint256 sig_r,
-        uint256 sig_s
+        uint256 sigR,
+        uint256 sigS
     ) external;
 
     function bidSigner() external payable;

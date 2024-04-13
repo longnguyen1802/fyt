@@ -1,0 +1,5 @@
+slither: source https://github.com/crytic/slither
+command: slither .
+
+mythrith: source https://github.com/Consensys/mythril
+command: myth analyze <solidity-file>
