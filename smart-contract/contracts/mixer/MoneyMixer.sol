@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.20;
 
-import "../cryptography/AbeOkamotoPartialBlind.sol";
 import "../interfaces/IMemberAccount.sol";
 import "../utilities/Time.sol";
 import "../utilities/Modifiers.sol";
+import "../interfaces/ICryptography.sol";
 
 /* Phase
  * 1: Send phase (Only accept send transaction)
@@ -29,24 +29,26 @@ contract MoneyMixer {
     }
 
     address immutable protocol;
-    AbeOkamotoBlind ab;
+    address immutable cryptography;
     PhaseControl phaseControl;
     uint256 totalSendMoney;
     uint256 totalReceiveMoney;
-    bool isSendState;
-    bool isReceiveState;
     mapping(address => mapping(uint256 => uint256)) distributeMoneyMessage;
     mapping(address => mapping(uint256 => uint256)) distributeMoneySignature;
     mapping(address => uint256) sendTransactionConfirm;
 
-    constructor(address _protocol) nonNullAddress(_protocol) {
+    constructor(
+        address _protocol,
+        address _cryptography,
+        uint256 _phaseLength
+    ) nonNullAddress(_protocol) nonNullAddress(_cryptography) {
         protocol = _protocol;
+        cryptography = _cryptography;
         //ab = _ab;
         //phaseControl = _phaseControl;
         totalSendMoney = 0;
         totalReceiveMoney = 0;
-        isSendState = false;
-        isReceiveState = false;
+        phaseControl = PhaseControl(1, _phaseLength, block.number);
     }
 
     function recordSendTransaction(
@@ -56,6 +58,7 @@ contract MoneyMixer {
     ) external onlyProtocol {
         require(phaseControl.currentPhase == 1);
         distributeMoneyMessage[account][e] = index;
+        totalSendMoney += IMemberAccount(account).getMRValue(index);
         IMemberAccount(account).processMR(index);
     }
 
@@ -79,8 +82,7 @@ contract MoneyMixer {
     ) external onlyProtocol {
         require(phaseControl.currentPhase == 3);
         uint256 z = uint256(keccak256(abi.encode(money)));
-        verifyAbeOkamotoSignature(
-            ab,
+        ICryptography(cryptography).verifyAbeOkamotoSignature(
             signerPubKey,
             z,
             account,
@@ -92,5 +94,29 @@ contract MoneyMixer {
 
         sendTransactionConfirm[account] += money;
         totalReceiveMoney += money;
+    }
+
+    /********************************* Phase control ****************************/
+    function moveToSignPhase() external onlyProtocol {
+        require(phaseControl.currentPhase == 1);
+        checkCurrentPhaseEnd(phaseControl, block.number);
+        moveToNextPhase(phaseControl, block.number);
+    }
+
+    function moveToReceivePhase() external onlyProtocol {
+        require(phaseControl.currentPhase == 2);
+        checkCurrentPhaseEnd(phaseControl, block.number);
+        moveToNextPhase(phaseControl, block.number);
+    }
+
+    function moveToValidityCheckPhase() external onlyProtocol {
+        require(phaseControl.currentPhase == 3);
+        checkCurrentPhaseEnd(phaseControl, block.number);
+        moveToNextPhase(phaseControl, block.number);
+    }
+    // New round start
+    function resetPhaseControl() external onlyProtocol {
+        require(phaseControl.currentPhase == 4);
+        resetPhase(phaseControl, block.number);
     }
 }

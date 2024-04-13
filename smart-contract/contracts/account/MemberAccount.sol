@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "../cryptography/Elgama.sol";
 import "../interfaces/IProtocol.sol";
 import "../interfaces/IMemberAccount.sol";
 
 contract MemberAccount is IMemberAccount {
+    modifier nonNullAddress(address _address) {
+        require(_address != address(0), "Address cannot be null");
+        _;
+    }
+
     mapping(address => uint256) allowances;
     // Normal account information
     address immutable protocol;
+    address immutable cryptography;
     uint256 immutable sendKey;
     uint256 immutable receiveKey;
 
@@ -27,14 +32,15 @@ contract MemberAccount is IMemberAccount {
 
     constructor(
         address _protocol,
+        address _cryptography,
         uint256 _pubKey,
         uint256 _sendKey,
         uint256 _receiveKey,
         uint256 _signNonce,
         uint256 _signerDepositFee
-    ) {
-        require(_protocol != address(0));
+    ) nonNullAddress(_protocol) nonNullAddress(_cryptography) {
         protocol = _protocol;
+        cryptography = _cryptography;
         pubKey = _pubKey;
         sendKey = _sendKey;
         receiveKey = _receiveKey;
@@ -94,7 +100,12 @@ contract MemberAccount is IMemberAccount {
         uint256 sigS
     ) external {
         uint256 m = uint256(keccak256(abi.encode(nonce, e)));
-        verifyElgamaSignature(elgama, m, sigR, sigS, receiveKey);
+        ICryptography(cryptography).verifyElgamaSignature(
+            m,
+            sigR,
+            sigS,
+            receiveKey
+        );
         IProtocol(protocol).sendReferRequest(nonce, e);
     }
 
@@ -105,7 +116,12 @@ contract MemberAccount is IMemberAccount {
         uint256 sigS
     ) external {
         uint256 m = uint256(keccak256(abi.encode(e, s)));
-        verifyElgamaSignature(elgama, m, sigR, sigS, receiveKey);
+        ICryptography(cryptography).verifyElgamaSignature(
+            m,
+            sigR,
+            sigS,
+            receiveKey
+        );
         IProtocol(protocol).onboardMember(e, s);
     }
 
@@ -117,7 +133,12 @@ contract MemberAccount is IMemberAccount {
     ) external {
         // Call the interface
         uint256 m = uint256(keccak256(abi.encode(index, e)));
-        verifyElgamaSignature(elgama, m, sigR, sigS, sendKey);
+        ICryptography(cryptography).verifyElgamaSignature(
+            m,
+            sigR,
+            sigS,
+            receiveKey
+        );
         IProtocol(protocol).sendTransaction(index, e);
     }
 
@@ -132,7 +153,12 @@ contract MemberAccount is IMemberAccount {
     ) external {
         // Call the interface
         uint256 m = uint256(keccak256(abi.encode(rho, delta, omega, sigma)));
-        verifyElgamaSignature(elgama, m, sigR, sigS, receiveKey);
+        ICryptography(cryptography).verifyElgamaSignature(
+            m,
+            sigR,
+            sigS,
+            receiveKey
+        );
         IProtocol(protocol).receiveTransaction(money, rho, delta, omega, sigma);
     }
 
@@ -145,7 +171,12 @@ contract MemberAccount is IMemberAccount {
     ) external {
         // Call the interface
         uint256 m = uint256(keccak256(abi.encode(account, e, r)));
-        verifyElgamaSignature(elgama, m, sigR, sigS, pubKey);
+        ICryptography(cryptography).verifyElgamaSignature(
+            m,
+            sigR,
+            sigS,
+            receiveKey
+        );
         IProtocol(protocol).signTransaction(account, e, r);
     }
 
@@ -162,7 +193,12 @@ contract MemberAccount is IMemberAccount {
 
     function approve(uint256 amount, uint256 sigR, uint256 sigS) external {
         uint256 m = uint256(keccak256(abi.encode(msg.sender, amount)));
-        verifyElgamaSignature(elgama, m, sigR, sigS, receiveKey);
+        ICryptography(cryptography).verifyElgamaSignature(
+            m,
+            sigR,
+            sigS,
+            receiveKey
+        );
         allowances[msg.sender] += amount;
     }
 

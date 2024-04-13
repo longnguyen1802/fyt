@@ -2,7 +2,8 @@
 
 pragma solidity 0.8.20;
 
-import "../cryptography/BlindSchnorr.sol";
+import "../interfaces/ICryptography.sol";
+import "../utilities/Time.sol";
 
 contract ReferMixer {
     modifier onlyProtocol() {
@@ -18,21 +19,29 @@ contract ReferMixer {
         _;
     }
 
-    BlindSchnoor bs;
+    address immutable cryptography;
     address immutable protocol;
+    PhaseControl phaseControl;
 
     mapping(address => mapping(uint256 => bool)) referIdentify;
     mapping(uint256 => uint256) referMessage;
     mapping(uint256 => uint256) referSignature;
 
-    constructor(address _protocol) nonNullAddress(_protocol) {
+    constructor(
+        address _protocol,
+        address _cryptography,
+        uint256 _phaseLength
+    ) nonNullAddress(_protocol) nonNullAddress(_cryptography) {
         protocol = _protocol;
+        cryptography = _cryptography;
+        phaseControl = PhaseControl(1, _phaseLength, block.number);
     }
 
     function recordReferRequest(
         address account,
         uint256 nonce
     ) external onlyProtocol {
+        require(phaseControl.currentPhase == 1);
         referIdentify[account][nonce] = true;
     }
 
@@ -42,6 +51,7 @@ contract ReferMixer {
         uint256 e
     ) external onlyProtocol {
         require(referIdentify[account][nonce]);
+        require(phaseControl.currentPhase == 1);
         referMessage[nonce] = e;
     }
 
@@ -49,6 +59,7 @@ contract ReferMixer {
         uint256 nonce,
         uint256 s
     ) external onlyProtocol {
+        require(phaseControl.currentPhase == 2);
         referSignature[nonce] = s;
     }
 
@@ -58,8 +69,32 @@ contract ReferMixer {
         uint256 e,
         uint256 s
     ) public view {
+        require(phaseControl.currentPhase >= 3);
         SchnorrSignature memory schSig = SchnorrSignature(e, s);
         // Check BlindSchnorr Signature
-        verifySchnorrSignature(bs, schSig, account, signerPubKey);
+        ICryptography(cryptography).verifySchnorrSignature(
+            schSig,
+            account,
+            signerPubKey
+        );
+    }
+
+    /********************************* Phase control ****************************/
+    function moveToSignPhase() external onlyProtocol {
+        require(phaseControl.currentPhase == 1);
+        checkCurrentPhaseEnd(phaseControl, block.number);
+        moveToNextPhase(phaseControl, block.number);
+    }
+
+    function moveToOnboardPhase() external onlyProtocol {
+        require(phaseControl.currentPhase == 2);
+        checkCurrentPhaseEnd(phaseControl, block.number);
+        moveToNextPhase(phaseControl, block.number);
+    }
+
+    // New round start
+    function resetPhaseControl() external onlyProtocol {
+        require(phaseControl.currentPhase == 3);
+        resetPhase(phaseControl, block.number);
     }
 }

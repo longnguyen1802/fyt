@@ -32,7 +32,7 @@ contract Protocol is IProtocol {
     RoundInfo roundInfo;
 
     // Address of mixer
-    address mixerControl;
+    address immutable mixerControl;
     address moneyMixer;
     address referMixer;
 
@@ -152,9 +152,12 @@ contract Protocol is IProtocol {
         // Modify Round info state
         roundInfo.isEnd = false;
         roundInfo.roundEnd += roundInfo.roundLong;
+        IReferMixer(referMixer).resetPhaseControl();
+        IMoneyMixer(moneyMixer).resetPhaseControl();
         IMemberAccount(roundInfo.signerInfo.nextSigner).increaseSignerIndex(
             numberMember
         );
+        
     }
 
     /*
@@ -298,5 +301,26 @@ contract Protocol is IProtocol {
      */
     function verifySigner() public {
         roundInfo.signerVerify = true;
+    }
+
+    /*************************** Phase control *************************************/
+    function startSignPhaseForReferMixer() external {
+        IReferMixer(referMixer).moveToSignPhase();
+    }
+
+    function startOnboardPhaseForReferMixer() external {
+        IReferMixer(referMixer).moveToOnboardPhase();
+    }
+
+    function startSignPhaseForMoneyMixer() external {
+        IMoneyMixer(moneyMixer).moveToSignPhase();
+    }
+
+    function startReceivePhaseForMoneyMixer() external {
+        IMoneyMixer(moneyMixer).moveToReceivePhase();
+    }
+
+    function startValidityCheckPhaseForMoneyMixer() external {
+        IMoneyMixer(moneyMixer).moveToValidityCheckPhase();
     }
 }

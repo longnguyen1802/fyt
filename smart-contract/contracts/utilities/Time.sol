@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 struct PhaseControl {
-    uint256 numPhase;
     uint256 currentPhase;
     uint256 phaseLength;
     uint256 phaseEndBlock;
@@ -18,7 +17,7 @@ function checkCurrentPhaseEnd(
 
 function moveToNextPhase(PhaseControl storage phase, uint256 currentBlock) {
     require(currentBlock >= phase.phaseEndBlock);
-    phase.currentPhase = (phase.currentPhase % phase.numPhase) + 1;
+    phase.currentPhase = phase.currentPhase + 1;
     phase.phaseEndBlock += phase.phaseLength;
 }
 

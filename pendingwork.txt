@@ -1,7 +1,7 @@
-Add phase time control for every workflow
-Factor the MemberAccount contract 
+Add phase time control for every workflow   Done
+Factor the MemberAccount contract           Done 
 
-Change Mixer, Cryptography to contract
+Change Mixer, Cryptography to contract      Mixer Done
 Handle initialize of parameter
 Add uint test for all basic function
  
