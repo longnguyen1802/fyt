@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 import "../math/Math.sol";
 import "../interfaces/ICryptography.sol";
-
+import "hardhat/console.sol";
 contract Cryptography is ICryptography {
     uint256 immutable p;
     uint256 immutable q;
@@ -11,12 +11,12 @@ contract Cryptography is ICryptography {
     AbeOkamotoBlind ab;
     Elgama elgama;
 
-    constructor(uint256 _p, uint256 _q, uint256 _g, uint256 _d) {
+    constructor(uint256 _p, uint256 _q, uint256 _g, uint256 _d, uint256 _s) {
         p = _p;
         q = _q;
         g = _g;
         bs = BlindSchnoor(g, p, q);
-        ab = AbeOkamotoBlind(p, q, g, _d);
+        ab = AbeOkamotoBlind(p, q, g, _d, _s);
         elgama = Elgama(p, g);
     }
 
@@ -25,29 +25,28 @@ contract Cryptography is ICryptography {
         uint256 r,
         uint256 alpha,
         uint256 beta,
-        uint256 y,
-        address m
-    ) public view returns (SchnorrSignature memory) {
+        uint256 pusign,
+        address memberAddress
+    ) public view returns (BlindSchnorrSig memory) {
         uint256 r0 = mulmod(
             r,
             mulmod(
                 Math.invMod(Math.modExp(bs.g, alpha, bs.p), bs.p),
-                Math.invMod(Math.modExp(y, bs.p - 1 - beta, bs.p), bs.p),
+                Math.invMod(Math.modExp(pusign, beta, bs.p), bs.p),
                 bs.p
             ),
             bs.p
         );
-        y % r;
-        uint256 e0 = uint256(keccak256(abi.encode(m, r0))) % bs.q;
-        return SchnorrSignature(e0, e0 + (beta % bs.q));
+        uint256 e0 = uint256(keccak256(abi.encode(memberAddress, r0))) % bs.p;
+        return BlindSchnorrSig(e0, (e0 + beta) % bs.p);
     }
 
     function signBlindSchnorrMessage(
-        uint256 prk,
+        uint256 prsign,
         uint256 K,
         uint256 e
     ) public view returns (uint256) {
-        return K + ((prk * e) % bs.q);
+        return (K + bs.q - mulmod(prsign, e, bs.q)) % bs.q;
     }
 
     function unblindBlindSchnorrMessage(
@@ -55,38 +54,35 @@ contract Cryptography is ICryptography {
         uint256 alpha,
         uint256 e0
     ) public view returns (SchnorrSignature memory) {
-        return SchnorrSignature((s - alpha) % bs.q, e0);
+        return SchnorrSignature(e0, (s + bs.q - alpha) % bs.q);
     }
 
     function verifySchnorrSignature(
         SchnorrSignature memory sig,
         address m,
-        uint256 pk
-    ) public view {
+        uint256 pusign
+    ) external view returns (bool) {
         uint256 verifyFactor = mulmod(
-            Math.modExp(bs.g, sig.s0, bs.q),
-            Math.modExp(pk, sig.e0, bs.q),
-            bs.q
+            Math.modExp(bs.g, sig.s0, bs.p),
+            Math.modExp(pusign, sig.e0, bs.p),
+            bs.p
         );
-        require(
-            (sig.e0 % bs.q) ==
-                uint256(keccak256(abi.encode(m, verifyFactor))) % bs.q
-        );
+        return ((sig.e0 % bs.p) ==
+            uint256(keccak256(abi.encode(m, verifyFactor))) % bs.p);
     }
     /**************************Abe Okamoto Function ***************************/
     function prepareAbeOkamotoMessage(
-        uint256 u,
-        uint256 s,
+        uint256 prnonce,
         uint256 info
-    ) public view returns (uint256, uint256) {
+    ) public view returns (uint256, uint256, uint256) {
         uint256 z = uint256(keccak256(abi.encode(info)));
-        uint256 a = Math.modExp(ab.g, u, ab.p);
+        uint256 a = Math.modExp(ab.g, prnonce, ab.p);
         uint256 b = mulmod(
-            Math.modExp(ab.g, s, ab.p),
-            Math.modExp(z, ab.d, ab.p),
+            Math.modExp(ab.g, ab.mS, ab.p),
+            Math.modExp(z, ab.mD, ab.p),
             ab.p
         );
-        return (a, b);
+        return (a, b, z);
     }
 
     function blindAbeOkamotoMessage(
@@ -96,13 +92,17 @@ contract Cryptography is ICryptography {
         uint256 t2,
         uint256 t3,
         uint256 t4,
-        uint256 m,
         uint256 z,
-        uint256 y
+        address m,
+        uint256 pusign
     ) public view returns (uint256) {
         uint256 alpha = mulmod(
             a,
-            mulmod(Math.modExp(ab.g, t1, ab.p), Math.modExp(y, t2, ab.p), ab.p),
+            mulmod(
+                Math.modExp(ab.g, t1, ab.p),
+                Math.modExp(pusign, t2, ab.p),
+                ab.p
+            ),
             ab.p
         );
         uint256 beta = mulmod(
@@ -111,18 +111,17 @@ contract Cryptography is ICryptography {
             ab.p
         );
         uint256 theta = uint256(keccak256(abi.encode(alpha, beta, z, m)));
-        return theta - t2 - (t4 % ab.q);
+        return (theta + ab.q - ((t2 + t4) % ab.q)) % ab.q;
     }
 
     function signAbeOkamotoMessage(
-        uint256 u,
-        uint256 s,
+        uint256 prnonce,
         uint256 e,
-        uint256 x
-    ) public view returns (uint256, uint256, uint256, uint256) {
-        uint256 c = e - (ab.d % ab.q);
-        uint256 r = u - (mulmod(c, x, ab.q) % ab.q);
-        return (r, c, s, ab.d);
+        uint256 prsign
+    ) public view returns (uint256, uint256) {
+        uint256 c = (e + ab.q - (ab.mD % ab.q)) % ab.q;
+        uint256 r = (prnonce + ab.q - (mulmod(c, prsign, ab.q) % ab.q)) % ab.q;
+        return (r, c);
     }
 
     function unblindAbeOkamotoMessage(
@@ -131,28 +130,27 @@ contract Cryptography is ICryptography {
         uint256 t3,
         uint256 t4,
         uint256 r,
-        uint256 c,
-        uint256 s
+        uint256 c
     ) public view returns (uint256, uint256, uint256, uint256) {
         uint256 rho = (r + (t1 % ab.q));
         uint256 omega = (c + (t2 % ab.q));
-        uint256 sigma = (s + (t3 % ab.q));
-        uint256 delta = (ab.d + (t4 % ab.q));
+        uint256 sigma = (ab.mS + (t3 % ab.q));
+        uint256 delta = (ab.mD + (t4 % ab.q));
         return (rho, omega, sigma, delta);
     }
 
     function verifyAbeOkamotoSignature(
-        uint256 y,
+        uint256 pusign,
         uint256 z,
         address m,
         uint256 rho,
         uint256 omega,
         uint256 sigma,
         uint256 delta
-    ) public view {
+    ) public view returns (bool) {
         uint256 checkAlpha = mulmod(
             Math.modExp(ab.g, rho, ab.p),
-            Math.modExp(y, omega, ab.p),
+            Math.modExp(pusign, omega, ab.p),
             ab.p
         );
         uint256 checkBeta = mulmod(
@@ -160,33 +158,59 @@ contract Cryptography is ICryptography {
             Math.modExp(z, delta, ab.p),
             ab.p
         );
+
         uint256 checkSig = uint256(
             keccak256(abi.encode(checkAlpha, checkBeta, z, m))
         );
-        require((omega + (delta % ab.q)) == (checkSig % ab.q));
+        return ((omega + delta) % ab.q) == (checkSig % ab.q);
     }
 
     /************************** Elgama ***************************/
+    function generateElgamaSignature(
+        uint256 k,
+        uint256 m,
+        uint256 prkey
+    ) public view returns (uint256, uint256) {
+        uint256 r = Math.modExp(g, k, p);
+        uint256 hashMessage = uint256(keccak256(abi.encode(m)));
+        uint256 part = mulmod(prkey, r, p - 1) % (p - 1);
+        uint256 s;
+        if (hashMessage > part) {
+            s = mulmod(
+                (hashMessage - part) % (p - 1),
+                Math.invMod(k, p - 1),
+                p - 1
+            );
+        } else {
+            s = mulmod(
+                (p - 1 - part + hashMessage) % (p - 1),
+                Math.invMod(k, p - 1),
+                p - 1
+            );
+        }
+
+        return (r, s);
+    }
     /**
      *
      * @param m Message sign
      * @param r Part of signature
      * @param s Part of signature
-     * @param y Public key of signre
+     * @param pukey Public key of signer
      */
     function verifyElgamaSignature(
         uint256 m,
         uint256 r,
         uint256 s,
-        uint256 y
-    ) public view {
+        uint256 pukey
+    ) public view returns (bool) {
         uint256 computeVerify = mulmod(
             Math.modExp(r, s, elgama.p),
-            Math.modExp(y, r, elgama.p),
+            Math.modExp(pukey, r, elgama.p),
             elgama.p
         );
 
         uint256 hashMessage = uint256(keccak256(abi.encode(m)));
-        require(Math.modExp(elgama.g, hashMessage, elgama.p) == computeVerify);
+        return (Math.modExp(elgama.g, hashMessage, elgama.p) == computeVerify);
     }
 }

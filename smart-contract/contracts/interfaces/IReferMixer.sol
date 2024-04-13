@@ -18,7 +18,7 @@ interface IReferMixer {
         uint256 signerPubKey,
         uint256 e,
         uint256 s
-    ) external view;
+    ) external;
 
     function moveToSignPhase() external;
     function moveToOnboardPhase() external;

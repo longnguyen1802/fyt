@@ -5,7 +5,8 @@ struct AbeOkamotoBlind {
     uint256 p;
     uint256 q;
     uint256 g;
-    uint256 d;
+    uint256 mS;
+    uint256 mD;
 }
 struct BlindSchnorrSig {
     // Original Signature
@@ -43,7 +44,7 @@ interface ICryptography {
         uint256 beta,
         uint256 y,
         address m
-    ) external view returns (SchnorrSignature memory);
+    ) external view returns (BlindSchnorrSig memory);
 
     function signBlindSchnorrMessage(
         uint256 prk,
@@ -61,14 +62,13 @@ interface ICryptography {
         SchnorrSignature memory sig,
         address m,
         uint256 pk
-    ) external view;
+    ) external returns (bool);
 
     /**************************Abe Okamoto Function ***************************/
     function prepareAbeOkamotoMessage(
         uint256 u,
-        uint256 s,
         uint256 info
-    ) external view returns (uint256, uint256);
+    ) external view returns (uint256, uint256, uint256);
 
     function blindAbeOkamotoMessage(
         uint256 a,
@@ -77,17 +77,16 @@ interface ICryptography {
         uint256 t2,
         uint256 t3,
         uint256 t4,
-        uint256 m,
         uint256 z,
+        address m,
         uint256 y
     ) external view returns (uint256);
 
     function signAbeOkamotoMessage(
         uint256 u,
-        uint256 s,
         uint256 e,
         uint256 x
-    ) external view returns (uint256, uint256, uint256, uint256);
+    ) external view returns (uint256, uint256);
 
     function unblindAbeOkamotoMessage(
         uint256 t1,
@@ -95,8 +94,7 @@ interface ICryptography {
         uint256 t3,
         uint256 t4,
         uint256 r,
-        uint256 c,
-        uint256 s
+        uint256 c
     ) external view returns (uint256, uint256, uint256, uint256);
 
     function verifyAbeOkamotoSignature(
@@ -107,7 +105,7 @@ interface ICryptography {
         uint256 omega,
         uint256 sigma,
         uint256 delta
-    ) external view;
+    ) external returns (bool);
 
     /************************** Elgama ***************************/
     function verifyElgamaSignature(
@@ -115,5 +113,5 @@ interface ICryptography {
         uint256 r,
         uint256 s,
         uint256 y
-    ) external view;
+    ) external view returns (bool);
 }

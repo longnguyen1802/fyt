@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "analyze:slither": "slither . --filter-paths math --exclude-informational",
-    "analyze:mythril": "myth analyze ./contracts/Protocol.sol ./contract/account/MemberAccount.sol",
+    "analyze:mythril": "myth analyze ./contracts/Protocol.sol ./contracts/account/MemberAccount.sol ./contracts/mixer/MoneyMixer.sol ./contracts/mixer/ReferMixer.sol ./contracts/cryptography/Cryptography.sol",
     "lint": "npx prettier --write --plugin=prettier-plugin-solidity contracts/**/*.sol"
   },
   "author": "",

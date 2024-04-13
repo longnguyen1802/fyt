@@ -303,12 +303,13 @@ contract Protocol is IProtocol {
         IMoneyMixer(moneyMixer).doValidityCheck();
     }
 
-    function formNewUTXO(uint256 amount) public {
+    function formNewMR(uint256 amount) public {
         require(members[msg.sender]);
         require(roundInfo.signerVerify);
         IMoneyMixer(moneyMixer).spendReceiveTransactionMoney(msg.sender,amount);
         IMemberAccount(msg.sender).createMR(amount);
     }
+
     /*************************** Phase control *************************************/
     function startSignPhaseForReferMixer() external {
         IReferMixer(referMixer).moveToSignPhase();

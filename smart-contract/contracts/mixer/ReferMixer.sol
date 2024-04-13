@@ -69,7 +69,7 @@ contract ReferMixer is IReferMixer {
         uint256 signerPubKey,
         uint256 e,
         uint256 s
-    ) public view {
+    ) public {
         require(phaseControl.currentPhase >= 3);
         SchnorrSignature memory schSig = SchnorrSignature(e, s);
         // Check BlindSchnorr Signature
