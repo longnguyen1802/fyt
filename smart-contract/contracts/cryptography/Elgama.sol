@@ -8,6 +8,10 @@ struct Elgama {
     uint256 g;
 }
 
+struct ElgamaSignature {
+    uint256 r;
+    uint256 s;
+}
 /**
  *
  * @param m Message sign

@@ -73,5 +73,4 @@ interface IProtocol {
         uint256 sigma
     ) external;
     function verifySigner() external;
-    function breakUTXO(uint256 index) external;
 }

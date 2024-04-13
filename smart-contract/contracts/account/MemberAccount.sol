@@ -15,10 +15,11 @@ contract MemberAccount is IMemberAccount {
     uint256 totalURT;
     mapping(uint256 => MR) moneyRecord;
 
-    // Sender support information
+    // Signer support information
     uint256 pubKey;
     uint256 signNonce;
     uint256 signIndex;
+    uint256 signerDepositFee;
 
     // Elgama signature for checking send/receive/refer request
     Elgama elgama;
@@ -39,6 +40,7 @@ contract MemberAccount is IMemberAccount {
     function getSignIndex() public view returns (uint256) {
         return signIndex;
     }
+
     function increaseSignerIndex(uint256 amount) external {
         signIndex += amount;
     }
@@ -72,24 +74,83 @@ contract MemberAccount is IMemberAccount {
         return moneyRecord[index].money;
     }
 
-    function sendReferRequest() external {}
-
-    function onBoard() external {}
-
-    function sendTransaction() external {
-        // Call the interface
+    /**
+     *
+     * @param nonce Nonce for refer request
+     * @param e Message for refer request
+     * @param sig_r Part of elgama signature
+     * @param sig_s Part of elgama signature
+     */
+    function sendReferRequest(
+        uint256 nonce,
+        uint256 e,
+        uint256 sig_r,
+        uint256 sig_s
+    ) external {
+        uint256 m = uint256(keccak256(abi.encode(nonce, e)));
+        verifyElgamaSignature(elgama, m, sig_r, sig_s, receiveKey);
+        IProtocol(protocol).sendReferRequest(nonce, e);
     }
 
-    function receiveTransaction() external {
-        // Call the interface
+    function onBoard(
+        uint256 e,
+        uint256 s,
+        uint256 sig_r,
+        uint256 sig_s
+    ) external {
+        uint256 m = uint256(keccak256(abi.encode(e, s)));
+        verifyElgamaSignature(elgama, m, sig_r, sig_s, receiveKey);
+        IProtocol(protocol).onboardMember(e, s);
     }
 
-    function signTransaction() external {
+    function sendTransaction(
+        uint256 index,
+        uint256 e,
+        uint256 sig_r,
+        uint256 sig_s
+    ) external {
         // Call the interface
+        uint256 m = uint256(keccak256(abi.encode(index, e)));
+        verifyElgamaSignature(elgama, m, sig_r, sig_s, sendKey);
+        IProtocol(protocol).sendTransaction(index, e);
     }
 
-    function bidSigner() external {}
+    function receiveTransaction(
+        uint256 money,
+        uint256 rho,
+        uint256 delta,
+        uint256 omega,
+        uint256 sigma,
+        uint256 sig_r,
+        uint256 sig_s
+    ) external {
+        // Call the interface
+        uint256 m = uint256(keccak256(abi.encode(rho, delta, omega, sigma)));
+        verifyElgamaSignature(elgama, m, sig_r, sig_s, receiveKey);
+        IProtocol(protocol).receiveTransaction(money, rho, delta, omega, sigma);
+    }
 
-    function claimRefundSigner() external {}
+    function signTransaction(
+        address account,
+        uint256 e,
+        uint256 r,
+        uint256 sig_r,
+        uint256 sig_s
+    ) external {
+        // Call the interface
+        uint256 m = uint256(keccak256(abi.encode(account, e, r)));
+        verifyElgamaSignature(elgama, m, sig_r, sig_s, pubKey);
+        IProtocol(protocol).signTransaction(account, e, r);
+    }
 
+    function bidSigner() external payable {
+        require(msg.value == signerDepositFee);
+        IProtocol(protocol).bidForNextSigner();
+    }
+
+    function claimRefundSigner() external {
+        IProtocol(protocol).refundUnsuccessSigner();
+    }
+
+    receive() external payable {}
 }

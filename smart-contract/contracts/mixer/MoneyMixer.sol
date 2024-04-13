@@ -56,7 +56,7 @@ function recordReceiveTransaction(
         sigma,
         delta
     );
-    
+
     moneyMixer.sendTransactionConfirm[account] += money;
     moneyMixer.totalReceiveMoney += money;
 }
