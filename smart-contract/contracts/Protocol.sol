@@ -4,8 +4,7 @@ pragma solidity 0.8.20;
 import "./account/Signer.sol";
 import "./interfaces/IProtocol.sol";
 import "./interfaces/IMemberAccount.sol";
-import "./utilities/ReentrancyGuard.sol";
-contract Protocol is IProtocol,ReentrancyGuard {
+contract Protocol is IProtocol {
     // Event
     event RequestRefer(address indexed signer);
     event SendTransactionRequest(
