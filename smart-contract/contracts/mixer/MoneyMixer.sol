@@ -2,9 +2,7 @@
 
 pragma solidity 0.8.20;
 
-import "../interfaces/IMemberAccount.sol";
-import "../utilities/Time.sol";
-import "../utilities/Modifiers.sol";
+import "../interfaces/IMoneyMixer.sol";
 import "../interfaces/ICryptography.sol";
 
 /* Phase
@@ -14,7 +12,7 @@ import "../interfaces/ICryptography.sol";
  * 4: Verify signer phase
  */
 
-contract MoneyMixer {
+contract MoneyMixer is IMoneyMixer {
     modifier onlyProtocol() {
         require(
             msg.sender == protocol,

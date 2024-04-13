@@ -27,9 +27,6 @@ contract MemberAccount is IMemberAccount {
     uint256 signIndex;
     uint256 immutable signerDepositFee;
 
-    // Elgama signature for checking send/receive/refer request
-    Elgama elgama;
-
     constructor(
         address _protocol,
         address _cryptography,

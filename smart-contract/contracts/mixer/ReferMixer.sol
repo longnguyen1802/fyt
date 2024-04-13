@@ -3,9 +3,10 @@
 pragma solidity 0.8.20;
 
 import "../interfaces/ICryptography.sol";
+import "../interfaces/IReferMixer.sol";
 import "../utilities/Time.sol";
 
-contract ReferMixer {
+contract ReferMixer is IReferMixer {
     modifier onlyProtocol() {
         require(
             msg.sender == protocol,

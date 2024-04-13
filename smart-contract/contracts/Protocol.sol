@@ -6,7 +6,6 @@ import "./interfaces/IProtocol.sol";
 import "./interfaces/IMemberAccount.sol";
 import "./interfaces/IMoneyMixer.sol";
 import "./interfaces/IReferMixer.sol";
-import "./utilities/Modifiers.sol";
 
 contract Protocol is IProtocol {
 
