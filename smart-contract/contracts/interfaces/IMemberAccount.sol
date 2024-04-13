@@ -26,7 +26,7 @@ interface IMemberAccount {
     function unlockMR(uint256 index) external;
     function getMoneyRecordState(uint256 index) external view returns (State);
     function getMRValue(uint256 index) external view returns (uint256);
-
+    function createMR(uint256 amount) external;
     function sendReferRequest(
         uint256 nonce,
         uint256 e,

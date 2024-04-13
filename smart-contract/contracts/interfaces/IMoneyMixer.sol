@@ -50,6 +50,11 @@ interface IMoneyMixer {
         uint256 signerPubKey
     ) external;
 
+    function spendReceiveTransactionMoney(
+        address account,
+        uint256 amount
+    ) external;
+
     /**
      * @dev Moves the contract to the sign phase.
      */
@@ -69,4 +74,6 @@ interface IMoneyMixer {
      * @dev Resets the phase control.
      */
     function resetPhaseControl() external;
+
+    function doValidityCheck() external view;
 }

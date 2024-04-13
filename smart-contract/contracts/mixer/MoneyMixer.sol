@@ -33,7 +33,7 @@ contract MoneyMixer is IMoneyMixer {
     uint256 totalReceiveMoney;
     mapping(address => mapping(uint256 => uint256)) distributeMoneyMessage;
     mapping(address => mapping(uint256 => uint256)) distributeMoneySignature;
-    mapping(address => uint256) sendTransactionConfirm;
+    mapping(address => uint256) receiveTransactionConfirm;
 
     constructor(
         address _protocol,
@@ -90,10 +90,22 @@ contract MoneyMixer is IMoneyMixer {
             delta
         );
 
-        sendTransactionConfirm[account] += money;
+        receiveTransactionConfirm[account] += money;
         totalReceiveMoney += money;
     }
 
+    function doValidityCheck() external view onlyProtocol {
+        require(phaseControl.currentPhase >= 4);
+        require(totalReceiveMoney == totalSendMoney);
+    }
+
+    function spendReceiveTransactionMoney(
+        address account,
+        uint256 amount
+    ) external onlyProtocol {
+        require(receiveTransactionConfirm[account] >= amount);
+        receiveTransactionConfirm[account] -= amount;
+    }
     /********************************* Phase control ****************************/
     function moveToSignPhase() external onlyProtocol {
         require(phaseControl.currentPhase == 1);

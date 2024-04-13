@@ -10,6 +10,14 @@ contract MemberAccount is IMemberAccount {
         _;
     }
 
+    modifier onlyProtocol() {
+        require(
+            msg.sender == protocol,
+            "Only the protocol can call this function."
+        );
+        _;
+    }
+
     mapping(address => uint256) allowances;
     // Normal account information
     address immutable protocol;
@@ -83,6 +91,10 @@ contract MemberAccount is IMemberAccount {
         return moneyRecord[index].money;
     }
 
+    function createMR(uint256 amount) external onlyProtocol {
+        totalURT += 1;
+        moneyRecord[totalURT] = MR(amount, State.Unlock);
+    }
     /**
      *
      * @param nonce Nonce for refer request
