@@ -35,14 +35,14 @@ contract ReferMixer is IReferMixer {
     ) nonNullAddress(_protocol) nonNullAddress(_cryptography) {
         protocol = _protocol;
         cryptography = _cryptography;
-        phaseControl = PhaseControl(1, _phaseLength, block.number);
+        phaseControl = PhaseControl(3, _phaseLength, block.number);
     }
 
     function recordReferRequest(
         address account,
         uint256 nonce
     ) external onlyProtocol {
-        require(phaseControl.currentPhase == 1);
+        require(phaseControl.currentPhase == 1, "Not in refer phase");
         referIdentify[account][nonce] = true;
     }
 
@@ -51,8 +51,8 @@ contract ReferMixer is IReferMixer {
         uint256 nonce,
         uint256 e
     ) external onlyProtocol {
-        require(referIdentify[account][nonce]);
-        require(phaseControl.currentPhase == 1);
+        require(referIdentify[account][nonce], "Member not make refer request");
+        require(phaseControl.currentPhase == 1, "Not in refer phase");
         referMessage[nonce] = e;
     }
 
@@ -60,7 +60,7 @@ contract ReferMixer is IReferMixer {
         uint256 nonce,
         uint256 s
     ) external onlyProtocol {
-        require(phaseControl.currentPhase == 2);
+        require(phaseControl.currentPhase == 2, "Not in sign phase");
         referSignature[nonce] = s;
     }
 
@@ -70,7 +70,7 @@ contract ReferMixer is IReferMixer {
         uint256 e,
         uint256 s
     ) public {
-        require(phaseControl.currentPhase >= 3);
+        require(phaseControl.currentPhase >= 3, "Not in onboard phase");
         SchnorrSignature memory schSig = SchnorrSignature(e, s);
         // Check BlindSchnorr Signature
         require(
@@ -84,20 +84,20 @@ contract ReferMixer is IReferMixer {
 
     /********************************* Phase control ****************************/
     function moveToSignPhase() external onlyProtocol {
-        require(phaseControl.currentPhase == 1);
+        require(phaseControl.currentPhase == 1, "Not in refer phase");
         checkCurrentPhaseEnd(phaseControl, block.number);
         moveToNextPhase(phaseControl, block.number);
     }
 
     function moveToOnboardPhase() external onlyProtocol {
-        require(phaseControl.currentPhase == 2);
+        require(phaseControl.currentPhase == 2, "Not in sign phase");
         checkCurrentPhaseEnd(phaseControl, block.number);
         moveToNextPhase(phaseControl, block.number);
     }
 
     // New round start
     function resetPhaseControl() external onlyProtocol {
-        require(phaseControl.currentPhase == 3);
+        require(phaseControl.currentPhase == 3, "Not in final phase");
         resetPhase(phaseControl, block.number);
     }
 }

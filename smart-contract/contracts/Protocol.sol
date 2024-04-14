@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+//import "hardhat/console.sol";
 import "./account/Signer.sol";
 import "./interfaces/IProtocol.sol";
 import "./interfaces/IMemberAccount.sol";
@@ -24,9 +25,9 @@ contract Protocol is IProtocol {
 
     // ************************************************** PROTOCOL ATTRIBUTE ***********************************************
     // Protocol params
-    ProtocolParams params;
+    ProtocolParams public params;
     // Deployment phase
-    DeploymentState deployState;
+    DeploymentState public deployState;
     // All other phases
     RoundInfo roundInfo;
 
@@ -36,8 +37,8 @@ contract Protocol is IProtocol {
     address referMixer;
 
     // Keep track of member
-    uint256 numberMember;
-    mapping(address => bool) members;
+    uint256 public numberMember;
+    mapping(address => bool) public members;
 
     /*
         Constructor
@@ -89,13 +90,14 @@ contract Protocol is IProtocol {
      */
 
     function initialMemberRegister() public payable {
-        require(msg.value >= params.protocolFee);
-        require(block.number <= deployState.endblock);
+        require(msg.value >= params.protocolFee,"Insufficient protocol fee");
+        require(block.number <= deployState.endblock,"Not in deployment state");
         members[msg.sender] = true;
         if(deployState.numInitialMember <= 0) {
             roundInfo.signerInfo.nextSigner = msg.sender;
         }
         deployState.numInitialMember++;
+        numberMember++;
     }
 
     /*
@@ -105,7 +107,7 @@ contract Protocol is IProtocol {
     End the initial state
      */
     function closeDeploymentState() public {
-        require(block.number > deployState.endblock);
+        require(block.number > deployState.endblock,"Deployment state not end");
         deployState.isDeploymentEnd = true;
     }
 
@@ -139,8 +141,8 @@ contract Protocol is IProtocol {
             Round not in process
      */
     function startNewRound() public {
-        require(deployState.isDeploymentEnd);
-        require(roundInfo.isEnd);
+        require(deployState.isDeploymentEnd,"Deployment not end");
+        require(roundInfo.isEnd,"Previous round not end");
         // Mofidy Signer info state
         roundInfo.signerInfo.currentSigner = roundInfo.signerInfo.nextSigner;
         roundInfo.signerInfo.nextSigner = address(0);
@@ -149,7 +151,7 @@ contract Protocol is IProtocol {
         roundInfo.roundEnd += roundInfo.roundLong;
         IReferMixer(referMixer).resetPhaseControl();
         IMoneyMixer(moneyMixer).resetPhaseControl();
-        IMemberAccount(roundInfo.signerInfo.nextSigner).increaseSignerIndex(
+        IMemberAccount(roundInfo.signerInfo.currentSigner).increaseSignerIndex(
             numberMember
         );
         
@@ -163,8 +165,8 @@ contract Protocol is IProtocol {
             Refund for signer
      */
     function endRound() public {
-        require(roundInfo.roundEnd <= block.number);
-        require(roundInfo.isEnd == false);
+        require(roundInfo.roundEnd <= block.number,"Round still in time");
+        require(roundInfo.isEnd == false,"Round already end");
         roundInfo.signerInfo.signerDeposit[
             roundInfo.signerInfo.currentSigner
         ] = false;
@@ -177,7 +179,7 @@ contract Protocol is IProtocol {
         STEP 1: Inner member send request to refer new member
      */
     function requestRefer() public {
-        require(members[msg.sender]);
+        require(members[msg.sender],"Not member of protocol");
         emit RequestRefer(msg.sender);
     }
     /**
@@ -186,7 +188,7 @@ contract Protocol is IProtocol {
      * @param nonce Public nonce generate by Signer
      */
     function startRequestRefer(address account, uint256 nonce) public {
-        require(msg.sender == roundInfo.signerInfo.currentSigner);
+        require(msg.sender == roundInfo.signerInfo.currentSigner,"Not current signer");
         IReferMixer(referMixer).recordReferRequest(account, nonce);
     }
 
@@ -196,7 +198,7 @@ contract Protocol is IProtocol {
      * @param e :     Refer message (Blind)
      */
     function sendReferRequest(uint256 nonce, uint256 e) public {
-        require(members[msg.sender]);
+        require(members[msg.sender],"Not member of protocol");
         IReferMixer(referMixer).recordReferMessage(msg.sender, nonce, e);
     }
     /**
@@ -205,7 +207,7 @@ contract Protocol is IProtocol {
      * @param s     : Refer signature
      */
     function signReferRequest(uint256 nonce, uint256 s) public {
-        require(msg.sender == roundInfo.signerInfo.currentSigner);
+        require(msg.sender == roundInfo.signerInfo.currentSigner,"Not current signer");
         IReferMixer(referMixer).recordReferSignature(nonce, s);
     }
 
@@ -241,7 +243,7 @@ contract Protocol is IProtocol {
      * @param e : Blind message
      */
     function sendTransaction(uint256 index, uint256 e) public {
-        require(members[msg.sender]);
+        require(members[msg.sender],"Not member of protocol");
         emit SendTransactionRequest(msg.sender, index, e);
         IMoneyMixer(moneyMixer).recordSendTransaction(msg.sender, index, e);
     }
@@ -253,7 +255,7 @@ contract Protocol is IProtocol {
      * @param r : Signature sign by signer
      */
     function signTransaction(address account, uint256 e, uint256 r) public {
-        require(msg.sender == roundInfo.signerInfo.currentSigner);
+        require(msg.sender == roundInfo.signerInfo.currentSigner,"Not current signer");
         // Verify signer computation
         IMoneyMixer(moneyMixer).recordSendSignature(account, e, r);
     }
@@ -297,8 +299,8 @@ contract Protocol is IProtocol {
     }
 
     function formNewMR(uint256 amount) public {
-        require(members[msg.sender]);
-        require(roundInfo.signerVerify);
+        require(members[msg.sender],"Not member of protocol");
+        require(roundInfo.signerVerify,"Lastest round caught cheat signer");
         IMoneyMixer(moneyMixer).spendReceiveTransactionMoney(msg.sender,amount);
         IMemberAccount(msg.sender).createMR(amount);
     }
@@ -322,5 +324,14 @@ contract Protocol is IProtocol {
 
     function startValidityCheckPhaseForMoneyMixer() external {
         IMoneyMixer(moneyMixer).moveToValidityCheckPhase();
+    }
+
+    // Get function 
+    function getReferMixer() public view returns (address) {
+        return referMixer;
+    }
+
+    function getMoneyMixer() public view returns (address) {
+        return moneyMixer;
     }
 }

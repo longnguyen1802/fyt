@@ -95,6 +95,13 @@ contract MemberAccount is IMemberAccount {
         totalURT += 1;
         moneyRecord[totalURT] = MR(amount, State.Unlock);
     }
+
+    /************* Initial Member Register ***********************/
+    // Some one need to deposit money so no need to check signature
+    function registerInitialMember(uint256 _value) public payable {
+        IProtocol(protocol).initialMemberRegister{value: _value}();
+    }
+
     /**
      *
      * @param nonce Nonce for refer request

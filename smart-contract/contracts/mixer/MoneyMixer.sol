@@ -44,7 +44,7 @@ contract MoneyMixer is IMoneyMixer {
         cryptography = _cryptography;
         totalSendMoney = 0;
         totalReceiveMoney = 0;
-        phaseControl = PhaseControl(1, _phaseLength, block.number);
+        phaseControl = PhaseControl(4, _phaseLength, block.number);
     }
 
     function recordSendTransaction(
@@ -107,25 +107,25 @@ contract MoneyMixer is IMoneyMixer {
     }
     /********************************* Phase control ****************************/
     function moveToSignPhase() external onlyProtocol {
-        require(phaseControl.currentPhase == 1);
+        require(phaseControl.currentPhase == 1, "Not in send phase");
         checkCurrentPhaseEnd(phaseControl, block.number);
         moveToNextPhase(phaseControl, block.number);
     }
 
     function moveToReceivePhase() external onlyProtocol {
-        require(phaseControl.currentPhase == 2);
+        require(phaseControl.currentPhase == 2, "Not in sign phase");
         checkCurrentPhaseEnd(phaseControl, block.number);
         moveToNextPhase(phaseControl, block.number);
     }
 
     function moveToValidityCheckPhase() external onlyProtocol {
-        require(phaseControl.currentPhase == 3);
+        require(phaseControl.currentPhase == 3, "Not in receive check phase");
         checkCurrentPhaseEnd(phaseControl, block.number);
         moveToNextPhase(phaseControl, block.number);
     }
     // New round start
     function resetPhaseControl() external onlyProtocol {
-        require(phaseControl.currentPhase == 4);
+        require(phaseControl.currentPhase == 4, "Not in final phase");
         resetPhase(phaseControl, block.number);
     }
 }
