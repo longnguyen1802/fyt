@@ -2,13 +2,12 @@
 pragma solidity 0.8.20;
 
 import "../interfaces/IProtocol.sol";
-
 function recordBidForSigner(
     IProtocol.SignerInfo storage signerInfo,
     address account,
     uint256 signIndex
 ) {
-    require(signIndex < signerInfo.nextSignerIndex);
+    require(signIndex < signerInfo.nextSignerIndex || signerInfo.nextSignerIndex==0,"Sign index is larger than current next signer index");
     signerInfo.nextSigner = account;
     signerInfo.nextSignerIndex = signIndex;
     signerInfo.signerDeposit[account] = true;

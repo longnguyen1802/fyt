@@ -18,8 +18,9 @@ interface IMemberAccount {
         uint128 denominator;
     }
 
+    function setSignIndex(uint256 _signIndex) external;
     function getSignIndex() external view returns (uint256);
-    function increaseSignerIndex(uint256 amount) external;
+    function increaseSignIndex(uint256 amount) external;
     function getSignKey() external view returns (uint256);
     function processMR(uint256 index) external;
     function lockMR(uint256 index) external;

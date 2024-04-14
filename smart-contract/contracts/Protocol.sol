@@ -98,6 +98,7 @@ contract Protocol is IProtocol {
         }
         deployState.numInitialMember++;
         numberMember++;
+        IMemberAccount(msg.sender).setSignIndex(block.number);
     }
 
     /*
@@ -146,12 +147,13 @@ contract Protocol is IProtocol {
         // Mofidy Signer info state
         roundInfo.signerInfo.currentSigner = roundInfo.signerInfo.nextSigner;
         roundInfo.signerInfo.nextSigner = address(0);
+        roundInfo.signerInfo.nextSignerIndex = 0;
         // Modify Round info state
         roundInfo.isEnd = false;
         roundInfo.roundEnd += roundInfo.roundLong;
         IReferMixer(referMixer).resetPhaseControl();
         IMoneyMixer(moneyMixer).resetPhaseControl();
-        IMemberAccount(roundInfo.signerInfo.currentSigner).increaseSignerIndex(
+        IMemberAccount(roundInfo.signerInfo.currentSigner).increaseSignIndex(
             numberMember
         );
         

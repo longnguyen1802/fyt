@@ -5,6 +5,8 @@ import "../interfaces/IProtocol.sol";
 import "../interfaces/IMemberAccount.sol";
 
 contract MemberAccount is IMemberAccount {
+    event UpdateSignIndex(uint256 index);
+
     modifier nonNullAddress(address _address) {
         require(_address != address(0), "Address cannot be null");
         _;
@@ -54,11 +56,16 @@ contract MemberAccount is IMemberAccount {
         signerDepositFee = _signerDepositFee;
     }
 
+    function setSignIndex(uint256 _signIndex) public onlyProtocol() {
+        signIndex = _signIndex;
+        emit UpdateSignIndex(_signIndex);
+    }
+
     function getSignIndex() public view returns (uint256) {
         return signIndex;
     }
 
-    function increaseSignerIndex(uint256 amount) external {
+    function increaseSignIndex(uint256 amount) external {
         signIndex += amount;
     }
 
@@ -99,6 +106,7 @@ contract MemberAccount is IMemberAccount {
     /************* Initial Member Register ***********************/
     // Some one need to deposit money so no need to check signature
     function registerInitialMember(uint256 _value) public payable {
+        require(isValidProtocolAddress(protocol), "Invalid protocol address");
         IProtocol(protocol).initialMemberRegister{value: _value}();
     }
 
@@ -207,8 +215,9 @@ contract MemberAccount is IMemberAccount {
     }
 
     function bidSigner() external payable {
-        require(msg.value == signerDepositFee);
-        IProtocol(protocol).bidForNextSigner();
+        require(msg.value == signerDepositFee,"Insufficient deposit fee");
+        require(isValidProtocolAddress(protocol),"Invalid protocol address");
+        IProtocol(protocol).bidForNextSigner{value: signerDepositFee}();
     }
 
     function claimRefundSigner() external {
@@ -237,5 +246,12 @@ contract MemberAccount is IMemberAccount {
         );
         allowances[msg.sender] -= amount;
         payable(msg.sender).transfer(amount);
+    }
+
+    function isValidProtocolAddress(
+        address _protocol
+    ) internal pure returns (bool) {
+        // Add your validation logic here, e.g., check against a whitelist
+        return _protocol != address(0);
     }
 }

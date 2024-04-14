@@ -233,5 +233,36 @@ describe("SignerRotation", () => {
       ac1params.punonce,
       user3,
     );
+
+    await account1
+      .connect(user1)
+      .registerInitialMember(protocolFee, { value: protocolFee });
+    expect(await protocol.members(account1.address)).to.be.eq(true);
+    let currentBlockNumber = await ethers.provider.getBlockNumber();
+    await time.advanceBlockTo(currentBlockNumber + 20);
+    await account2
+      .connect(user2)
+      .registerInitialMember(protocolFee, { value: protocolFee });
+    currentBlockNumber = await ethers.provider.getBlockNumber();
+    await time.advanceBlockTo(currentBlockNumber + 20);
+    await account3
+      .connect(user3)
+      .registerInitialMember(protocolFee, { value: protocolFee });
+    currentBlockNumber = await ethers.provider.getBlockNumber();
+    await time.advanceBlockTo(currentBlockNumber + deploymenLength);
+    await protocol.closeDeploymentState();
+    await protocol.startNewRound();
+  });
+  describe("BidSigner", () => {
+    it("bidForNextSigner", async () => {
+      await account3.connect(user3).bidSigner({value: signerDepositFee});
+    });
+    it("claimRefundSigner",async() => {
+      let accountBalanceBefore = await ethers.provider.getBalance(account3.address);
+      await account2.connect(user2).bidSigner({value: signerDepositFee});
+      await account3.connect(user3).claimRefundSigner();
+      let accountBalanceAfter = await ethers.provider.getBalance(account3.address);
+      expect(accountBalanceAfter.sub(accountBalanceBefore).eq(signerDepositFee)).to.be.eq(true);
+    });
   });
 });
