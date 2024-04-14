@@ -198,6 +198,7 @@ contract Protocol is IProtocol {
      * STEP 2: Signer generate nonce
      * @param nonce : Public nonce generate by signer
      * @param e :     Refer message (Blind)
+     * e = 
      */
     function sendReferRequest(uint256 nonce, uint256 e) public {
         require(members[msg.sender],"Not member of protocol");
@@ -335,5 +336,9 @@ contract Protocol is IProtocol {
 
     function getMoneyMixer() public view returns (address) {
         return moneyMixer;
+    }
+
+    function getCurrentSigner() public view returns (address) {
+        return roundInfo.signerInfo.currentSigner;
     }
 }

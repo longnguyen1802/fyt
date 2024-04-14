@@ -24,9 +24,9 @@ contract ReferMixer is IReferMixer {
     address immutable protocol;
     PhaseControl phaseControl;
 
-    mapping(address => mapping(uint256 => bool)) referIdentify;
-    mapping(uint256 => uint256) referMessage;
-    mapping(uint256 => uint256) referSignature;
+    mapping(address => mapping(uint256 => bool)) public referIdentify;
+    mapping(uint256 => uint256) public referMessage;
+    mapping(uint256 => uint256) public referSignature;
 
     constructor(
         address _protocol,
@@ -78,7 +78,8 @@ contract ReferMixer is IReferMixer {
                 schSig,
                 account,
                 signerPubKey
-            )
+            ),
+            "Invalid Schnoor signature"
         );
     }
 
@@ -99,5 +100,9 @@ contract ReferMixer is IReferMixer {
     function resetPhaseControl() external onlyProtocol {
         require(phaseControl.currentPhase == 3, "Not in final phase");
         resetPhase(phaseControl, block.number);
+    }
+
+    function getCurrentPhase() public view returns (uint256) {
+        return phaseControl.currentPhase;
     }
 }

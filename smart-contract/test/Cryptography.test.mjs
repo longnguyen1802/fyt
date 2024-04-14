@@ -104,7 +104,6 @@ describe("Cryptography", () => {
         alpha,
         e0,
       );
-
       expect(
         await cryptography.verifySchnorrSignature(signature, m, puSignKey),
       ).to.be.equal(true);

@@ -56,7 +56,7 @@ contract MemberAccount is IMemberAccount {
         signerDepositFee = _signerDepositFee;
     }
 
-    function setSignIndex(uint256 _signIndex) public onlyProtocol() {
+    function setSignIndex(uint256 _signIndex) public onlyProtocol {
         signIndex = _signIndex;
         emit UpdateSignIndex(_signIndex);
     }
@@ -110,6 +110,7 @@ contract MemberAccount is IMemberAccount {
         IProtocol(protocol).initialMemberRegister{value: _value}();
     }
 
+    /************************************ Refer Workflow **********************************/
     /**
      *
      * @param nonce Nonce for refer request
@@ -135,6 +136,44 @@ contract MemberAccount is IMemberAccount {
         IProtocol(protocol).sendReferRequest(nonce, e);
     }
 
+    function startRequestRefer(
+        address account,
+        uint256 nonce,
+        uint256 sigR,
+        uint256 sigS
+    ) public {
+        uint256 m = uint256(keccak256(abi.encode(account, nonce)));
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            ),
+            "Invalid elgama signature"
+        );
+        IProtocol(protocol).startRequestRefer(account, nonce);
+    }
+
+    function signReferRequest(
+        uint256 nonce,
+        uint256 s,
+        uint256 sigR,
+        uint256 sigS
+    ) public {
+        uint256 m = uint256(keccak256(abi.encode(nonce, s)));
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            ),
+            "Invalid elgama signature"
+        );
+        IProtocol(protocol).signReferRequest(nonce, s);
+    }
+
     function onBoard(
         uint256 e,
         uint256 s,
@@ -148,11 +187,13 @@ contract MemberAccount is IMemberAccount {
                 sigR,
                 sigS,
                 receiveKey
-            )
+            ),
+            "Invalid elgama signature"
         );
         IProtocol(protocol).onboardMember(e, s);
     }
 
+    /************************************ Money Workflow **********************************/
     function sendTransaction(
         uint256 index,
         uint256 e,
@@ -167,7 +208,8 @@ contract MemberAccount is IMemberAccount {
                 sigR,
                 sigS,
                 receiveKey
-            )
+            ),
+            "Invalid elgama signature"
         );
         IProtocol(protocol).sendTransaction(index, e);
     }
@@ -189,7 +231,8 @@ contract MemberAccount is IMemberAccount {
                 sigR,
                 sigS,
                 receiveKey
-            )
+            ),
+            "Invalid elgama signature"
         );
         IProtocol(protocol).receiveTransaction(money, rho, delta, omega, sigma);
     }
@@ -209,14 +252,16 @@ contract MemberAccount is IMemberAccount {
                 sigR,
                 sigS,
                 receiveKey
-            )
+            ),
+            "Invalid elgama signature"
         );
         IProtocol(protocol).signTransaction(account, e, r);
     }
 
+    /******************* Other function *******************/
     function bidSigner() external payable {
-        require(msg.value == signerDepositFee,"Insufficient deposit fee");
-        require(isValidProtocolAddress(protocol),"Invalid protocol address");
+        require(msg.value == signerDepositFee, "Insufficient deposit fee");
+        require(isValidProtocolAddress(protocol), "Invalid protocol address");
         IProtocol(protocol).bidForNextSigner{value: signerDepositFee}();
     }
 

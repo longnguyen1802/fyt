@@ -216,10 +216,10 @@ describe("SignerRotation", () => {
     account2 = await deployMemberAccount(
       protocol.address,
       cryptography.address,
-      ac1params.pusign,
-      ac1params.pusk,
-      ac1params.purk,
-      ac1params.punonce,
+      ac2params.pusign,
+      ac2params.pusk,
+      ac2params.purk,
+      ac2params.punonce,
       user2,
     );
 
@@ -227,10 +227,10 @@ describe("SignerRotation", () => {
     account3 = await deployMemberAccount(
       protocol.address,
       cryptography.address,
-      ac1params.pusign,
-      ac1params.pusk,
-      ac1params.purk,
-      ac1params.punonce,
+      ac3params.pusign,
+      ac3params.pusk,
+      ac3params.purk,
+      ac3params.punonce,
       user3,
     );
 
@@ -255,14 +255,20 @@ describe("SignerRotation", () => {
   });
   describe("BidSigner", () => {
     it("bidForNextSigner", async () => {
-      await account3.connect(user3).bidSigner({value: signerDepositFee});
+      await account3.connect(user3).bidSigner({ value: signerDepositFee });
     });
-    it("claimRefundSigner",async() => {
-      let accountBalanceBefore = await ethers.provider.getBalance(account3.address);
-      await account2.connect(user2).bidSigner({value: signerDepositFee});
+    it("claimRefundSigner", async () => {
+      const accountBalanceBefore = await ethers.provider.getBalance(
+        account3.address,
+      );
+      await account2.connect(user2).bidSigner({ value: signerDepositFee });
       await account3.connect(user3).claimRefundSigner();
-      let accountBalanceAfter = await ethers.provider.getBalance(account3.address);
-      expect(accountBalanceAfter.sub(accountBalanceBefore).eq(signerDepositFee)).to.be.eq(true);
+      const accountBalanceAfter = await ethers.provider.getBalance(
+        account3.address,
+      );
+      expect(
+        accountBalanceAfter.sub(accountBalanceBefore).eq(signerDepositFee),
+      ).to.be.eq(true);
     });
   });
 });
