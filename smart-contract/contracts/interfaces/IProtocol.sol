@@ -14,13 +14,6 @@ interface IProtocol {
     }
 
     struct ProtocolParams {
-        // Protocol generator
-        uint256 p;
-        uint256 q;
-        uint256 g;
-        // Random number
-        uint256 Ms;
-        uint256 Md;
         // Percentage send to parent
         Rational parentFee;
         // Encode fee

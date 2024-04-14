@@ -42,8 +42,6 @@ contract MoneyMixer is IMoneyMixer {
     ) nonNullAddress(_protocol) nonNullAddress(_cryptography) {
         protocol = _protocol;
         cryptography = _cryptography;
-        //ab = _ab;
-        //phaseControl = _phaseControl;
         totalSendMoney = 0;
         totalReceiveMoney = 0;
         phaseControl = PhaseControl(1, _phaseLength, block.number);
@@ -80,18 +78,19 @@ contract MoneyMixer is IMoneyMixer {
     ) external onlyProtocol {
         require(phaseControl.currentPhase == 3);
         uint256 z = uint256(keccak256(abi.encode(money)));
-        ICryptography(cryptography).verifyAbeOkamotoSignature(
-            signerPubKey,
-            z,
-            account,
-            rho,
-            omega,
-            sigma,
-            delta
-        );
-
         receiveTransactionConfirm[account] += money;
         totalReceiveMoney += money;
+        require(
+            ICryptography(cryptography).verifyAbeOkamotoSignature(
+                signerPubKey,
+                z,
+                account,
+                rho,
+                omega,
+                sigma,
+                delta
+            )
+        );
     }
 
     function doValidityCheck() external view onlyProtocol {

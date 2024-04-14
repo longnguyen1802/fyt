@@ -49,7 +49,7 @@ contract MemberAccount is IMemberAccount {
         pubKey = _pubKey;
         sendKey = _sendKey;
         receiveKey = _receiveKey;
-        signIndex = block.timestamp;
+        signIndex = block.number;
         signNonce = _signNonce;
         signerDepositFee = _signerDepositFee;
     }
@@ -109,11 +109,13 @@ contract MemberAccount is IMemberAccount {
         uint256 sigS
     ) external {
         uint256 m = uint256(keccak256(abi.encode(nonce, e)));
-        ICryptography(cryptography).verifyElgamaSignature(
-            m,
-            sigR,
-            sigS,
-            receiveKey
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            )
         );
         IProtocol(protocol).sendReferRequest(nonce, e);
     }
@@ -125,11 +127,13 @@ contract MemberAccount is IMemberAccount {
         uint256 sigS
     ) external {
         uint256 m = uint256(keccak256(abi.encode(e, s)));
-        ICryptography(cryptography).verifyElgamaSignature(
-            m,
-            sigR,
-            sigS,
-            receiveKey
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            )
         );
         IProtocol(protocol).onboardMember(e, s);
     }
@@ -142,11 +146,13 @@ contract MemberAccount is IMemberAccount {
     ) external {
         // Call the interface
         uint256 m = uint256(keccak256(abi.encode(index, e)));
-        ICryptography(cryptography).verifyElgamaSignature(
-            m,
-            sigR,
-            sigS,
-            receiveKey
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            )
         );
         IProtocol(protocol).sendTransaction(index, e);
     }
@@ -162,11 +168,13 @@ contract MemberAccount is IMemberAccount {
     ) external {
         // Call the interface
         uint256 m = uint256(keccak256(abi.encode(rho, delta, omega, sigma)));
-        ICryptography(cryptography).verifyElgamaSignature(
-            m,
-            sigR,
-            sigS,
-            receiveKey
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            )
         );
         IProtocol(protocol).receiveTransaction(money, rho, delta, omega, sigma);
     }
@@ -180,11 +188,13 @@ contract MemberAccount is IMemberAccount {
     ) external {
         // Call the interface
         uint256 m = uint256(keccak256(abi.encode(account, e, r)));
-        ICryptography(cryptography).verifyElgamaSignature(
-            m,
-            sigR,
-            sigS,
-            receiveKey
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            )
         );
         IProtocol(protocol).signTransaction(account, e, r);
     }
@@ -202,11 +212,13 @@ contract MemberAccount is IMemberAccount {
 
     function approve(uint256 amount, uint256 sigR, uint256 sigS) external {
         uint256 m = uint256(keccak256(abi.encode(msg.sender, amount)));
-        ICryptography(cryptography).verifyElgamaSignature(
-            m,
-            sigR,
-            sigS,
-            receiveKey
+        require(
+            ICryptography(cryptography).verifyElgamaSignature(
+                m,
+                sigR,
+                sigS,
+                receiveKey
+            )
         );
         allowances[msg.sender] += amount;
     }

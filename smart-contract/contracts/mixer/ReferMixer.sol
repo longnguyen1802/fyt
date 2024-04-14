@@ -73,10 +73,12 @@ contract ReferMixer is IReferMixer {
         require(phaseControl.currentPhase >= 3);
         SchnorrSignature memory schSig = SchnorrSignature(e, s);
         // Check BlindSchnorr Signature
-        ICryptography(cryptography).verifySchnorrSignature(
-            schSig,
-            account,
-            signerPubKey
+        require(
+            ICryptography(cryptography).verifySchnorrSignature(
+                schSig,
+                account,
+                signerPubKey
+            )
         );
     }
 

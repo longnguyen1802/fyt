@@ -44,11 +44,6 @@ contract Protocol is IProtocol {
         Set up all protocol parameters
      */
     constructor(
-        uint256 _p,
-        uint256 _q,
-        uint256 _g,
-        uint256 _Ms,
-        uint256 _Md,
         uint256 numeParentFee,
         uint256 demoParentFee,
         uint256 _protocolFee,
@@ -59,11 +54,6 @@ contract Protocol is IProtocol {
     ) {
         mixerControl = msg.sender;
         params = ProtocolParams(
-            _p,
-            _q,
-            _g,
-            _Ms,
-            _Md,
             Rational(numeParentFee, demoParentFee),
             _protocolFee,
             _joinFee,
@@ -102,7 +92,7 @@ contract Protocol is IProtocol {
         require(msg.value >= params.protocolFee);
         require(block.number <= deployState.endblock);
         members[msg.sender] = true;
-        if(deployState.numInitialMember == 0) {
+        if(deployState.numInitialMember <= 0) {
             roundInfo.signerInfo.nextSigner = msg.sender;
         }
         deployState.numInitialMember++;
@@ -231,14 +221,14 @@ contract Protocol is IProtocol {
         uint256 signerPubKey = IMemberAccount(
             roundInfo.signerInfo.currentSigner
         ).getSignKey();
+        members[msg.sender] = true;
+        numberMember+=1;
         IReferMixer(referMixer).verifyReferSignature(
             msg.sender,
             signerPubKey,
             e,
             s
         );
-        members[msg.sender] = true;
-        numberMember+=1;
     }
 
     /* 
