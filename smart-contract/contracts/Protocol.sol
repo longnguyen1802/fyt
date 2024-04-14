@@ -54,7 +54,8 @@ contract Protocol is IProtocol {
         uint256 _protocolFee,
         uint256 _joinFee,
         uint256 _signerDepositFee,
-        uint256 deploymentLength
+        uint256 deploymentLength,
+        uint256 _roundLong
     ) {
         mixerControl = msg.sender;
         params = ProtocolParams(
@@ -76,6 +77,10 @@ contract Protocol is IProtocol {
             false
         );
 
+        roundInfo.number = 0;
+        roundInfo.roundLong = _roundLong;
+        roundInfo.isEnd = true;
+
         numberMember = 0;
 
     }
@@ -96,8 +101,10 @@ contract Protocol is IProtocol {
     function initialMemberRegister() public payable {
         require(msg.value >= params.protocolFee);
         require(block.number <= deployState.endblock);
-        // Need to check interface (later)
         members[msg.sender] = true;
+        if(deployState.numInitialMember == 0) {
+            roundInfo.signerInfo.nextSigner = msg.sender;
+        }
         deployState.numInitialMember++;
     }
 
@@ -121,6 +128,8 @@ contract Protocol is IProtocol {
      */
 
     function bidForNextSigner() public payable {
+        require(deployState.isDeploymentEnd);
+        require(!roundInfo.isEnd);
         require(members[msg.sender]);
         require(msg.value == params.signerDepositFee);
         uint256 signIndex = IMemberAccount(msg.sender).getSignIndex();
@@ -140,12 +149,9 @@ contract Protocol is IProtocol {
             Round not in process
      */
     function startNewRound() public {
+        require(deployState.isDeploymentEnd);
         require(roundInfo.isEnd);
-        require(
-            roundInfo.signerInfo.nextSignerRegisterEndBlock <= block.number
-        );
         // Mofidy Signer info state
-        roundInfo.signerInfo.nextSignerRegisterEndBlock += roundInfo.roundLong;
         roundInfo.signerInfo.currentSigner = roundInfo.signerInfo.nextSigner;
         roundInfo.signerInfo.nextSigner = address(0);
         // Modify Round info state
@@ -172,9 +178,6 @@ contract Protocol is IProtocol {
         roundInfo.signerInfo.signerDeposit[
             roundInfo.signerInfo.currentSigner
         ] = false;
-        // Decide cheat signer
-        // Increase signer index if cheat
-        // Refund if not cheat;
         roundInfo.isEnd = true;
     }
 

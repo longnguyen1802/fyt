@@ -33,7 +33,6 @@ interface IProtocol {
         address currentSigner;
         address nextSigner;
         uint256 nextSignerIndex;
-        uint256 nextSignerRegisterEndBlock;
         mapping(address => bool) signerDeposit;
     }
 
@@ -46,10 +45,6 @@ interface IProtocol {
         // Signer infomation
         SignerInfo signerInfo;
         bool signerVerify;
-        // Refer mixer
-        ReferMixer referMixer;
-        // Money mixer
-        MoneyMixer moneyMixer;
     }
 
     function initialMemberRegister() external payable;
