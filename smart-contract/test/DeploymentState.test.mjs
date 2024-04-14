@@ -234,7 +234,7 @@ describe("Deployment", () => {
       user3,
     );
   });
-  describe("initialMemberRegister", () => {
+  describe("Deployment State", () => {
     it("initialMemberRegister", async () => {
       await account1
         .connect(user1)
@@ -253,6 +253,10 @@ describe("Deployment", () => {
       await protocol.closeDeploymentState();
       const numMem = await protocol.numberMember();
       expect(numMem.toString()).to.eq("3");
+    });
+    it("Start new round", async () => {
+      // expect not revert
+      await protocol.startNewRound();
     });
   });
 });
