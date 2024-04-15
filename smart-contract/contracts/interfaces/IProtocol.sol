@@ -60,5 +60,5 @@ interface IProtocol {
         uint256 omega,
         uint256 sigma
     ) external;
-    function verifySigner() external;
+    function validityCheck() external;
 }

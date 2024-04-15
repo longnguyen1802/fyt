@@ -31,9 +31,9 @@ contract MoneyMixer is IMoneyMixer {
     PhaseControl phaseControl;
     uint256 totalSendMoney;
     uint256 totalReceiveMoney;
-    mapping(address => mapping(uint256 => uint256)) distributeMoneyMessage;
-    mapping(address => mapping(uint256 => uint256)) distributeMoneySignature;
-    mapping(address => uint256) receiveTransactionConfirm;
+    mapping(address => mapping(uint256 => uint256)) public distributeMoneyMessage;
+    mapping(address => mapping(uint256 => uint256)) public distributeMoneySignature;
+    mapping(address => uint256) public receiveTransactionConfirm;
 
     constructor(
         address _protocol,
@@ -55,7 +55,6 @@ contract MoneyMixer is IMoneyMixer {
         require(phaseControl.currentPhase == 1);
         distributeMoneyMessage[account][e] = index;
         totalSendMoney += IMemberAccount(account).getMRValue(index);
-        IMemberAccount(account).processMR(index);
     }
 
     function recordSendSignature(
@@ -76,7 +75,7 @@ contract MoneyMixer is IMoneyMixer {
         uint256 sigma,
         uint256 signerPubKey
     ) external onlyProtocol {
-        require(phaseControl.currentPhase == 3);
+        require(phaseControl.currentPhase == 3,"Not in receive phase");
         uint256 z = uint256(keccak256(abi.encode(money)));
         receiveTransactionConfirm[account] += money;
         totalReceiveMoney += money;
@@ -89,7 +88,8 @@ contract MoneyMixer is IMoneyMixer {
                 omega,
                 sigma,
                 delta
-            )
+            ),
+            "Invalid AbeOkamoto signature"
         );
     }
 

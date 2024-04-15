@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+
 import "../interfaces/IProtocol.sol";
 import "../interfaces/IMemberAccount.sol";
+import "hardhat/console.sol";
 
 contract MemberAccount is IMemberAccount {
     event UpdateSignIndex(uint256 index);
@@ -20,7 +22,7 @@ contract MemberAccount is IMemberAccount {
         _;
     }
 
-    mapping(address => uint256) allowances;
+    mapping(address => uint256) public allowances;
     // Normal account information
     address immutable protocol;
     address immutable cryptography;
@@ -29,7 +31,7 @@ contract MemberAccount is IMemberAccount {
 
     // Money record
     uint256 totalURT;
-    mapping(uint256 => MR) moneyRecord;
+    mapping(uint256 => MR) public moneyRecord;
 
     // Signer support information
     uint256 immutable pubKey;
@@ -73,10 +75,10 @@ contract MemberAccount is IMemberAccount {
         return pubKey;
     }
 
-    function processMR(uint256 index) external {
-        require(msg.sender == protocol);
-        require(moneyRecord[index].state == State.Lock);
+    function processMR(uint256 index) onlyProtocol() external {
+        require(moneyRecord[index].state == State.Lock,"State is not Lock");
         moneyRecord[index].state = State.InProcess;
+
     }
 
     function lockMR(uint256 index) external {
@@ -100,7 +102,7 @@ contract MemberAccount is IMemberAccount {
 
     function createMR(uint256 amount) external onlyProtocol {
         totalURT += 1;
-        moneyRecord[totalURT] = MR(amount, State.Unlock);
+        moneyRecord[totalURT] = MR(amount, State.Lock);
     }
 
     /************* Initial Member Register ***********************/
@@ -207,7 +209,7 @@ contract MemberAccount is IMemberAccount {
                 m,
                 sigR,
                 sigS,
-                receiveKey
+                sendKey
             ),
             "Invalid elgama signature"
         );

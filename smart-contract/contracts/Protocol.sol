@@ -99,6 +99,7 @@ contract Protocol is IProtocol {
         deployState.numInitialMember++;
         numberMember++;
         IMemberAccount(msg.sender).setSignIndex(block.number);
+        IMemberAccount(msg.sender).createMR(params.protocolFee);
     }
 
     /*
@@ -249,6 +250,7 @@ contract Protocol is IProtocol {
         require(members[msg.sender],"Not member of protocol");
         emit SendTransactionRequest(msg.sender, index, e);
         IMoneyMixer(moneyMixer).recordSendTransaction(msg.sender, index, e);
+        IMemberAccount(msg.sender).processMR(index);
     }
 
     /**
@@ -296,7 +298,7 @@ contract Protocol is IProtocol {
     /**
      * PHASE 4: Validity check
      */
-    function verifySigner() public {
+    function validityCheck() public {
         roundInfo.signerVerify = true;
         IMoneyMixer(moneyMixer).doValidityCheck();
     }

@@ -422,3 +422,13 @@ describe("ReferWorkflow", () => {
     });
   });
 });
+
+async function generateElgamaSignature(cryptography, message, prikey, p, q) {
+  const nonce = getRandomRelativePrime(q, p.sub(1));
+  const [r, s] = await cryptography.generateElgamaSignature(
+    nonce,
+    message,
+    prikey,
+  );
+  return { r, s };
+}
