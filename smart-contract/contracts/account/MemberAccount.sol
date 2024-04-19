@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-
 import "../interfaces/IProtocol.sol";
 import "../interfaces/IMemberAccount.sol";
 import "hardhat/console.sol";
@@ -39,6 +38,9 @@ contract MemberAccount is IMemberAccount {
     uint256 signIndex;
     uint256 immutable signerDepositFee;
 
+    // Fee information
+    uint256 immutable protocolFee;
+    uint256 immutable joinFee;
     constructor(
         address _protocol,
         address _cryptography,
@@ -46,7 +48,9 @@ contract MemberAccount is IMemberAccount {
         uint256 _sendKey,
         uint256 _receiveKey,
         uint256 _signNonce,
-        uint256 _signerDepositFee
+        uint256 _signerDepositFee,
+        uint256 _protocolFee,
+        uint256 _joinFee
     ) nonNullAddress(_protocol) nonNullAddress(_cryptography) {
         protocol = _protocol;
         cryptography = _cryptography;
@@ -56,6 +60,8 @@ contract MemberAccount is IMemberAccount {
         signIndex = block.number;
         signNonce = _signNonce;
         signerDepositFee = _signerDepositFee;
+        protocolFee = _protocolFee;
+        joinFee = _joinFee;
     }
 
     function setSignIndex(uint256 _signIndex) public onlyProtocol {
@@ -75,10 +81,9 @@ contract MemberAccount is IMemberAccount {
         return pubKey;
     }
 
-    function processMR(uint256 index) onlyProtocol() external {
-        require(moneyRecord[index].state == State.Lock,"State is not Lock");
+    function processMR(uint256 index) external onlyProtocol {
+        require(moneyRecord[index].state == State.Lock, "State is not Lock");
         moneyRecord[index].state = State.InProcess;
-
     }
 
     function lockMR(uint256 index) external {
@@ -181,7 +186,8 @@ contract MemberAccount is IMemberAccount {
         uint256 s,
         uint256 sigR,
         uint256 sigS
-    ) external {
+    ) external payable {
+        require(msg.value >= protocolFee + joinFee, "Insufficient fee");
         uint256 m = uint256(keccak256(abi.encode(e, s)));
         require(
             ICryptography(cryptography).verifyElgamaSignature(
@@ -192,7 +198,8 @@ contract MemberAccount is IMemberAccount {
             ),
             "Invalid elgama signature"
         );
-        IProtocol(protocol).onboardMember(e, s);
+        require(isValidProtocolAddress(protocol), "Invalid protocol address");
+        IProtocol(protocol).onboardMember{value: protocolFee + joinFee}(e, s);
     }
 
     /************************************ Money Workflow **********************************/

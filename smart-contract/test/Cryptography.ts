@@ -1,65 +1,19 @@
 import { expect } from "chai";
-import pkg from "hardhat";
-
-const { ethers } = pkg;
-const { BigNumber } = ethers;
-
-function modPower(base, exponent, modulus) {
-  let result = BigNumber.from(1);
-  base = base.mod(modulus);
-  while (exponent.gt(0)) {
-    if (exponent.mod(2).eq(1)) {
-      result = result.mul(base).mod(modulus);
-    }
-    exponent = exponent.div(2);
-    base = base.mul(base).mod(modulus);
-  }
-  return result;
-}
-function gcd(a, b) {
-  // Convert the inputs to BigNumber
-  let aBN = BigNumber.from(a.toString());
-  let bBN = BigNumber.from(b.toString());
-
-  // Implement the Euclidean algorithm to find the GCD
-  while (!bBN.isZero()) {
-    const temp = bBN;
-    bBN = aBN.mod(bBN);
-    aBN = temp;
-  }
-
-  return aBN;
-}
-
-function getRandomBigNumber(max) {
-  return ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(max);
-}
-
-function getRandomRelativePrime(max, moduloNumber) {
-  let number = getRandomBigNumber(max);
-  let subMod = moduloNumber.mod(number);
-  while (!gcd(number, subMod).eq(1)) {
-    number = getRandomBigNumber(max);
-    subMod = moduloNumber.mod(number);
-  }
-  return number;
-}
-
-function generateKeyPair(g, q, p) {
-  const privKey = getRandomBigNumber(q);
-  const pubKey = modPower(g, privKey, p);
-  return { pubKey, privKey };
-}
+import { ethers } from "hardhat";
+import { BigNumber } from "ethers";
+import { Cryptography } from "../typechain-types";
+import { getRandomRelativePrime,getRandomBigNumber,modPower } from "./utils/Math";
+import {generateKeyPair} from "./utils/KeyGen";
 
 describe("Cryptography", () => {
   let Cryptography;
-  let cryptography;
-  let p;
-  let q;
-  let g;
-  let Ms;
-  let Md;
-  let accounts;
+  let cryptography:Cryptography;
+  let p: BigNumber;
+  let q: BigNumber;
+  let g: BigNumber;
+  let Ms: BigNumber;
+  let Md: BigNumber;
+  let accounts:any;
 
   before(async () => {
     [, ...accounts] = await ethers.getSigners();
@@ -78,12 +32,12 @@ describe("Cryptography", () => {
 
   describe("BlindSchnorr", () => {
     it("verifySchnoorSignature", async () => {
-      const K = getRandomBigNumber(q);
-      const r = modPower(g, K, p);
+      const K: BigNumber = getRandomBigNumber(q);
+      const r: BigNumber = modPower(g, K, p);
 
-      const alpha = getRandomBigNumber(q);
-      const beta = getRandomBigNumber(q);
-      const m = accounts[0].address;
+      const alpha: BigNumber = getRandomBigNumber(q);
+      const beta: BigNumber = getRandomBigNumber(q);
+      const m: string = accounts[0].address;
       const { pubKey: puSignKey, privKey: prSignKey } = generateKeyPair(
         g,
         q,
@@ -97,7 +51,7 @@ describe("Cryptography", () => {
         m,
       );
 
-      const s = await cryptography.signBlindSchnorrMessage(prSignKey, K, e);
+      const s: BigNumber = await cryptography.signBlindSchnorrMessage(prSignKey, K, e);
 
       const signature = await cryptography.unblindBlindSchnorrMessage(
         s,
@@ -112,7 +66,7 @@ describe("Cryptography", () => {
 
   describe("AbeOkamoto Partial Blind", () => {
     it("verifyAbeOkamotoSignature", async () => {
-      const prnonce = getRandomBigNumber(q);
+      const prnonce: BigNumber = getRandomBigNumber(q);
 
       const { pubKey: puSignKey, privKey: prSignKey } = generateKeyPair(
         g,
@@ -120,18 +74,18 @@ describe("Cryptography", () => {
         p,
       );
 
-      const info = BigNumber.from(100);
+      const info: BigNumber = BigNumber.from(100);
       const [a, b, z] = await cryptography.prepareAbeOkamotoMessage(
         prnonce,
         info,
       );
-      const t1 = getRandomBigNumber(q);
-      const t2 = getRandomBigNumber(q);
-      const t3 = getRandomBigNumber(q);
-      const t4 = getRandomBigNumber(q);
-      const m = accounts[0].address;
+      const t1: BigNumber = getRandomBigNumber(q);
+      const t2: BigNumber = getRandomBigNumber(q);
+      const t3: BigNumber = getRandomBigNumber(q);
+      const t4: BigNumber = getRandomBigNumber(q);
+      const m: string = accounts[0].address;
 
-      const e = await cryptography.blindAbeOkamotoMessage(
+      const e: BigNumber = await cryptography.blindAbeOkamotoMessage(
         a,
         b,
         t1,
@@ -143,7 +97,7 @@ describe("Cryptography", () => {
         puSignKey,
       );
 
-      const [r, c] = await cryptography.signAbeOkamotoMessage(
+      const [r, c]: BigNumber[] = await cryptography.signAbeOkamotoMessage(
         prnonce,
         e,
         prSignKey,
@@ -174,10 +128,10 @@ describe("Cryptography", () => {
         p,
       );
 
-      const k = getRandomRelativePrime(q, p.sub(1));
-      const m = getRandomBigNumber(q);
+      const k: BigNumber = getRandomRelativePrime(q, p.sub(1));
+      const m: BigNumber = getRandomBigNumber(q);
 
-      const [r, s] = await cryptography.generateElgamaSignature(
+      const [r, s]: BigNumber[] = await cryptography.generateElgamaSignature(
         k,
         m,
         prSignKey,

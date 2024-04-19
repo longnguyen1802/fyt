@@ -1,0 +1,56 @@
+import { expect } from "chai";
+import { ethers } from "hardhat";
+import { BigNumber, Signer } from "ethers";
+import { Cryptography, MemberAccount, Protocol, ReferMixer, MoneyMixer } from "../typechain-types";
+import { ProtocolParams, setupProtocol, setUpInitialMemberAndStart } from "./helpers/setup";
+
+describe("SignerRotation", () => {
+  // Constants for testing
+  const protocolFee: BigNumber = BigNumber.from(100);
+  const signerDepositFee: BigNumber = BigNumber.from(100000);
+  const deploymenLength: number = 7 * 700; // 7000 block a day
+  const roundLong: number = 1200;
+
+  // Protocol contracts and accounts
+  let protocol: Protocol;
+  let cryptography: Cryptography;
+  let referMixer: ReferMixer;
+  let moneyMixer: MoneyMixer;
+  let account1: MemberAccount;
+  let account2: MemberAccount;
+  let account3: MemberAccount;
+  let user1: Signer;
+  let user2: Signer;
+  let user3: Signer;
+
+  before(async () => {
+    let params:ProtocolParams = await setupProtocol();
+    await setUpInitialMemberAndStart(params)
+    cryptography = params.cryptography;
+    protocol = params.protocol;
+    referMixer = params.referMixer;
+    moneyMixer = params.moneyMixer;
+    account1 = params.account1;
+    account2 = params.account2;
+    account3 = params.account3;
+    user1 = params.user1
+    user2 = params.user2;
+    user3 = params.user3;
+  });
+
+  describe("BidSigner", () => {
+    it("bidForNextSigner", async () => {
+      // Account 3 bids for the next signer
+      await account3.connect(user3).bidSigner({ value: signerDepositFee });
+    });
+
+    it("claimRefundSigner", async () => {
+      // Claim refund for account 3
+      const accountBalanceBefore: BigNumber = await ethers.provider.getBalance(account3.address);
+      await account2.connect(user2).bidSigner({ value: signerDepositFee });
+      await account3.connect(user3).claimRefundSigner();
+      const accountBalanceAfter: BigNumber = await ethers.provider.getBalance(account3.address);
+      expect(accountBalanceAfter.sub(accountBalanceBefore).eq(signerDepositFee)).to.be.true;
+    });
+  });
+});
