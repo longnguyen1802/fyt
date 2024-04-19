@@ -46,7 +46,12 @@ interface IMemberAccount {
         uint256 sigR,
         uint256 sigS
     ) external;
-    function onBoard(uint256 e, uint256 s, uint256 sigR, uint256 sigS) external;
+    function onBoard(
+        uint256 e,
+        uint256 s,
+        uint256 sigR,
+        uint256 sigS
+    ) external payable;
 
     function registerInitialMember(uint256 value) external payable;
 

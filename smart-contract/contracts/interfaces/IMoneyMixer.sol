@@ -76,4 +76,9 @@ interface IMoneyMixer {
     function resetPhaseControl() external;
 
     function doValidityCheck() external view;
+
+    function getSendMessageIndex(
+        address account,
+        uint256 e
+    ) external view returns (uint256);
 }

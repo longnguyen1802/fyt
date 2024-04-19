@@ -99,7 +99,6 @@ contract Protocol is IProtocol {
         deployState.numInitialMember++;
         numberMember++;
         IMemberAccount(msg.sender).setSignIndex(block.number);
-        IMemberAccount(msg.sender).createMR(params.protocolFee);
     }
 
     /*
@@ -157,7 +156,6 @@ contract Protocol is IProtocol {
         IMemberAccount(roundInfo.signerInfo.currentSigner).increaseSignIndex(
             numberMember
         );
-        
     }
 
     /*
@@ -220,10 +218,8 @@ contract Protocol is IProtocol {
      * @param e : Original message
      * @param s : Signature
      */
-    function onboardMember(uint256 e, uint256 s) public {
-        // Pending check msg.value
-        // Pending add protocol fee
-        // Pending add join fee (Need an special type of MR)
+    function onboardMember(uint256 e, uint256 s) public payable{
+        require(msg.value >= params.joinFee + params.protocolFee,"Insufficient fee");
         uint256 signerPubKey = IMemberAccount(
             roundInfo.signerInfo.currentSigner
         ).getSignKey();
@@ -235,6 +231,8 @@ contract Protocol is IProtocol {
             e,
             s
         );
+        // Form an MR
+        IMemberAccount(msg.sender).createMR(params.joinFee);
     }
 
     /* 
@@ -310,6 +308,13 @@ contract Protocol is IProtocol {
         IMemberAccount(msg.sender).createMR(amount);
     }
 
+    function unlockMR(uint256 index,uint256 e) public {
+        require(members[msg.sender],"Not member of protocol");
+        require(roundInfo.signerVerify,"Lastest round caught cheat signer");
+        require(index!=0,"Invalid MR index");
+        require(IMoneyMixer(moneyMixer).getSendMessageIndex(msg.sender, e)==index,"Require an send transaction request with index");
+        IMemberAccount(msg.sender).unlockMR(index);
+    }
     /*************************** Phase control *************************************/
     function startSignPhaseForReferMixer() external {
         IReferMixer(referMixer).moveToSignPhase();

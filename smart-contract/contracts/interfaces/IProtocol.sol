@@ -50,7 +50,7 @@ interface IProtocol {
     function startRequestRefer(address account, uint256 nonce) external;
     function sendReferRequest(uint256 nonce, uint256 e) external;
     function signReferRequest(uint256 nonce, uint256 s) external;
-    function onboardMember(uint256 e, uint256 s) external;
+    function onboardMember(uint256 e, uint256 s) external payable;
     function sendTransaction(uint256 index, uint256 e) external;
     function signTransaction(address account, uint256 e, uint256 r) external;
     function receiveTransaction(
@@ -61,4 +61,6 @@ interface IProtocol {
         uint256 sigma
     ) external;
     function validityCheck() external;
+    function unlockMR(uint256 index, uint256 e) external;
+    function formNewMR(uint256 amount) external;
 }
