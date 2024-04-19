@@ -7,6 +7,7 @@ import "./interfaces/IProtocol.sol";
 import "./interfaces/IMemberAccount.sol";
 import "./interfaces/IMoneyMixer.sol";
 import "./interfaces/IReferMixer.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract Protocol is IProtocol {
 
@@ -92,6 +93,10 @@ contract Protocol is IProtocol {
     function initialMemberRegister() public payable {
         require(msg.value >= params.protocolFee,"Insufficient protocol fee");
         require(block.number <= deployState.endblock,"Not in deployment state");
+        // Interface check
+        ERC165 memberAccountChecker = ERC165(msg.sender);
+        require(memberAccountChecker.supportsInterface(type(IMemberAccount).interfaceId), "MemberAccount contract not found or does not support IMemberAccount interface");
+        
         members[msg.sender] = true;
         if(deployState.numInitialMember <= 0) {
             roundInfo.signerInfo.nextSigner = msg.sender;
@@ -220,6 +225,9 @@ contract Protocol is IProtocol {
      */
     function onboardMember(uint256 e, uint256 s) public payable{
         require(msg.value >= params.joinFee + params.protocolFee,"Insufficient fee");
+        // Interface check
+        ERC165 memberAccountChecker = ERC165(msg.sender);
+        require(memberAccountChecker.supportsInterface(type(IMemberAccount).interfaceId), "MemberAccount contract not found or does not support IMemberAccount interface");
         uint256 signerPubKey = IMemberAccount(
             roundInfo.signerInfo.currentSigner
         ).getSignKey();
