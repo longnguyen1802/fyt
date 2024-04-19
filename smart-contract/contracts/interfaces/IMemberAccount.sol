@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
-
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 enum State {
     Initial,
     Lock,
     InProcess,
     Unlock
 }
-interface IMemberAccount {
+interface IMemberAccount is IERC165 {
     struct MR {
         uint256 money;
         State state;

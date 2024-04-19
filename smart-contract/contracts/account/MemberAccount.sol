@@ -64,6 +64,12 @@ contract MemberAccount is IMemberAccount {
         joinFee = _joinFee;
     }
 
+    function supportsInterface(
+        bytes4 interfaceId
+    ) external pure returns (bool) {
+        return interfaceId == type(IMemberAccount).interfaceId;
+    }
+
     function setSignIndex(uint256 _signIndex) public onlyProtocol {
         signIndex = _signIndex;
         emit UpdateSignIndex(_signIndex);
