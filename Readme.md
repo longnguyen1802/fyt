@@ -44,15 +44,18 @@ npm run test
 Use ganache network for test
 
 In one terminal
-```
+
+```bash
 chmod +x start_ganache.sh
 ```
 
 In another terminal
-``bash
+
+```bash
 cd smart-contract
 npm run test -- --network ganache
-``
+```
+
 ## Static Code Analysis
 
 To run static code analysis using Slither:
