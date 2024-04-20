@@ -4,11 +4,9 @@ import { ethers } from "hardhat";
 import { BigNumber,Signer } from "ethers";
 import { MemberAccount,Protocol } from "../typechain-types";
 import { setupProtocol} from "./helpers/setup";
-
+import {advanceBlockTo,getCurrentBlockNumber} from "./utils/Time";
+import { protocolFee,deploymenLength} from "./utils/Constant";
 describe("Deployment", () => {
-  // Constant just for testing
-  const protocolFee: BigNumber = BigNumber.from(100);
-  const deploymenLength: number = 7 * 700; // 7000 block a day
 
   describe("Deployment State", () => {
     let protocol: Protocol;
@@ -35,8 +33,8 @@ describe("Deployment", () => {
       await account3.connect(user3).registerInitialMember(protocolFee, { value: protocolFee });
 
       // Advance blocks to simulate deployment completion
-      const currentBlockNumber: number = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + deploymenLength);
+      let targetBlockNumber = await getCurrentBlockNumber() + deploymenLength;
+      await advanceBlockTo(targetBlockNumber);
     });
 
     it("closeDeployment and check state", async () => {

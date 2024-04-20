@@ -3,6 +3,7 @@ import {BigNumber,Signer} from "ethers"
 import { getRandomBigNumber } from "../utils/Math";
 import { generateKeyPair } from "../utils/KeyGen";
 import { Cryptography,Protocol,MemberAccount,ReferMixer,MoneyMixer } from "../../typechain-types";
+import {p,q,g,numeParentFee,demoParentFee,protocolFee,joinFee,signerDepositFee,deploymenLength,roundLong,referPhaseLength,moneyPhaseLength} from "../utils/Constant";
 
 export function generateMemberAccountParams(g: BigNumber, q: BigNumber, p: BigNumber): { pusign: BigNumber, prsign: BigNumber, purk: BigNumber, prrk: BigNumber, pusk: BigNumber, prsk: BigNumber, punonce: BigNumber, prnonce: BigNumber } {
     const { pubKey: pusign, privKey: prsign } = generateKeyPair(g, q, p);
@@ -14,13 +15,6 @@ export function generateMemberAccountParams(g: BigNumber, q: BigNumber, p: BigNu
   
   async function deployCryptography(): Promise<Cryptography> {
     const Cryptography = await ethers.getContractFactory("Cryptography");
-    const p: BigNumber = BigNumber.from(
-      "115792089237316195423570985008687907852837564279074904382605163141518161494337",
-    );
-    const q: BigNumber = BigNumber.from("341948486974166000522343609283189");
-    const g: BigNumber = BigNumber.from(
-      "3382179820063921351711459720945002840687054300606715993250688069077934439078",
-    );
     const Ms: BigNumber = getRandomBigNumber(q);
     const Md: BigNumber = getRandomBigNumber(q);
     const cryptography: Cryptography = await Cryptography.deploy(p, q, g, Ms, Md);
@@ -30,13 +24,6 @@ export function generateMemberAccountParams(g: BigNumber, q: BigNumber, p: BigNu
   
   async function deployProtocol(): Promise<Protocol> {
     const Protocol = await ethers.getContractFactory("Protocol");
-    const numeParentFee: BigNumber = BigNumber.from(1);
-    const demoParentFee: BigNumber = BigNumber.from(2);
-    const protocolFee: BigNumber = BigNumber.from(100);
-    const joinFee: BigNumber = BigNumber.from(100000);
-    const signerDepositFee: BigNumber = BigNumber.from(100000);
-    const deploymenLength: number = 7 * 700; // 700 block a day
-    const roundLong: number = 1200;
     const protocol: Protocol = await Protocol.deploy(
       numeParentFee,
       demoParentFee,
@@ -52,11 +39,10 @@ export function generateMemberAccountParams(g: BigNumber, q: BigNumber, p: BigNu
   
   async function deployReferMixer(protocolAddress: string, cryptographyAddress: string): Promise<ReferMixer> {
     const ReferMixer = await ethers.getContractFactory("ReferMixer");
-    const phaseLength: number = 400;
     const referMixer: ReferMixer = await ReferMixer.deploy(
       protocolAddress,
       cryptographyAddress,
-      phaseLength,
+      referPhaseLength,
     );
     await referMixer.deployed();
     return referMixer;
@@ -64,11 +50,10 @@ export function generateMemberAccountParams(g: BigNumber, q: BigNumber, p: BigNu
   
   async function deployMoneyMixer(protocolAddress: string, cryptographyAddress: string): Promise<MoneyMixer> {
     const MoneyMixer = await ethers.getContractFactory("MoneyMixer");
-    const phaseLength: number = 300;
     const moneyMixer: MoneyMixer = await MoneyMixer.deploy(
       protocolAddress,
       cryptographyAddress,
-      phaseLength,
+      moneyPhaseLength,
     );
     await moneyMixer.deployed();
     return moneyMixer;
@@ -84,9 +69,6 @@ export function generateMemberAccountParams(g: BigNumber, q: BigNumber, p: BigNu
     user: Signer
   ): Promise<MemberAccount> {
     const MemberAccount = await ethers.getContractFactory("MemberAccount");
-    const signerDepositFee: BigNumber = BigNumber.from(100000);
-    const protocolFee: BigNumber = BigNumber.from(100);
-    const joinFee: BigNumber = BigNumber.from(100000);
     const account: MemberAccount = await MemberAccount.connect(user).deploy(
       protocolAddress,
       cryptographyAddress,

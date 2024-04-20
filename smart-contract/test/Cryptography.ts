@@ -4,13 +4,10 @@ import { BigNumber } from "ethers";
 import { Cryptography } from "../typechain-types";
 import { getRandomRelativePrime,getRandomBigNumber,modPower } from "./utils/Math";
 import {generateKeyPair} from "./utils/KeyGen";
-
+import {p,q,g} from "./utils/Constant";
 describe("Cryptography", () => {
   let Cryptography;
   let cryptography:Cryptography;
-  let p: BigNumber;
-  let q: BigNumber;
-  let g: BigNumber;
   let Ms: BigNumber;
   let Md: BigNumber;
   let accounts:any;
@@ -18,13 +15,6 @@ describe("Cryptography", () => {
   before(async () => {
     [, ...accounts] = await ethers.getSigners();
     Cryptography = await ethers.getContractFactory("Cryptography");
-    p = BigNumber.from(
-      "115792089237316195423570985008687907852837564279074904382605163141518161494337",
-    );
-    q = BigNumber.from("341948486974166000522343609283189");
-    g = BigNumber.from(
-      "3382179820063921351711459720945002840687054300606715993250688069077934439078",
-    );
     Ms = getRandomBigNumber(q);
     Md = getRandomBigNumber(q);
     cryptography = await Cryptography.deploy(p, q, g, Ms, Md);
@@ -34,7 +24,6 @@ describe("Cryptography", () => {
     it("verifySchnoorSignature", async () => {
       const K: BigNumber = getRandomBigNumber(q);
       const r: BigNumber = modPower(g, K, p);
-
       const alpha: BigNumber = getRandomBigNumber(q);
       const beta: BigNumber = getRandomBigNumber(q);
       const m: string = accounts[0].address;

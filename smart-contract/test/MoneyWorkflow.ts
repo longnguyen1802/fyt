@@ -1,4 +1,3 @@
-import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber, Signer } from "ethers";
@@ -7,25 +6,13 @@ import { ProtocolParams, setupProtocol, setUpInitialMemberAndStart, AccountParam
 import { getRandomBigNumber, getRandomRelativePrime, modPower } from "./utils/Math";
 import { generateElgamaSignature } from "./utils/SignatureGen";
 import { deployMemberAccount, generateMemberAccountParams } from "./helpers/deploy";
-
+import {p,q,g,protocolFee,joinFee,referPhaseLength,moneyPhaseLength,signerDepositFee,roundLong} from "./utils/Constant";
+import { advanceBlockTo, getCurrentBlockNumber } from "./utils/Time";
 
 describe("MoneyWorkflow", () => {
   // Protocol params
   let params:ProtocolParams
-  // Constant just for testing
-  const protocolFee = BigNumber.from(100);
-  const joinFee = BigNumber.from(100000);
-  const signerDepositFee = BigNumber.from(100000);
-  const deploymenLength = 7 * 700; // 7000 block a day
-  const roundLong = 1200;
-  // Phase control
-  const referPhaseLong = 400;
-  const moneyPhaseLong = 300;
 
-  // Protocol contracts and accounts
-  let p:BigNumber;
-  let q:BigNumber;
-  let g:BigNumber;
   let protocol: Protocol;
   let cryptography: Cryptography;
   let referMixer: ReferMixer;
@@ -61,9 +48,6 @@ describe("MoneyWorkflow", () => {
   before(async () => {
     params =  await setupProtocol();
     await setUpInitialMemberAndStart(params)
-    p = params.p;
-    q = params.q;
-    g = params.g;
     cryptography = params.cryptography;
     protocol = params.protocol;
     referMixer = params.referMixer;
@@ -156,8 +140,8 @@ describe("MoneyWorkflow", () => {
       expect(getE.eq(message.e)).to.be.eq(true);
     });
     it("signReferRequest", async () => {
-      const currentBlockNumber = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + referPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + referPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.startSignPhaseForReferMixer();
       const e = await referMixer.referMessage(referPuNonce);
       const s = await cryptography.signBlindSchnorrMessage(
@@ -186,8 +170,8 @@ describe("MoneyWorkflow", () => {
       expect(referSig.eq(s)).to.be.eq(true);
     });
     it("onBoardMember", async () => {
-      const currentBlockNumber = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + referPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + referPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.startOnboardPhaseForReferMixer();
 
       const referSig = await referMixer.referSignature(referPuNonce);
@@ -219,16 +203,17 @@ describe("MoneyWorkflow", () => {
 
     it("endRound",async()=>{
       await account1.connect(user1).bidSigner({ value: signerDepositFee });
-      let currentBlockNumber = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + moneyPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + moneyPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.startSignPhaseForMoneyMixer();
-      currentBlockNumber = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + moneyPhaseLong);
+      targetBlockNumber = await getCurrentBlockNumber() + moneyPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.startReceivePhaseForMoneyMixer();
-      currentBlockNumber = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + moneyPhaseLong);
+      targetBlockNumber = await getCurrentBlockNumber() + moneyPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.startValidityCheckPhaseForMoneyMixer();
-      await time.advanceBlockTo(currentBlockNumber + roundLong);
+      targetBlockNumber = await getCurrentBlockNumber() + roundLong;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.endRound();
       await protocol.startNewRound();
     })
@@ -270,8 +255,8 @@ describe("MoneyWorkflow", () => {
        expect(getIndex.eq(index)).to.be.eq(true);
     });
     it("signTransaction",async () =>{
-        const currentBlockNumber = await ethers.provider.getBlockNumber();
-        await time.advanceBlockTo(currentBlockNumber + moneyPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + moneyPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
         await protocol.startSignPhaseForMoneyMixer();
 
         let [_r, _c] = await cryptography.signAbeOkamotoMessage(
@@ -300,8 +285,8 @@ describe("MoneyWorkflow", () => {
         expect(getSig.eq(r)).to.be.eq(true)
     });
     it("receiveTransaction", async () =>{
-        const currentBlockNumber = await ethers.provider.getBlockNumber();
-        await time.advanceBlockTo(currentBlockNumber + moneyPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + moneyPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
         await protocol.startReceivePhaseForMoneyMixer();
 
         let [rho, omega, sigma, delta] =
@@ -325,8 +310,8 @@ describe("MoneyWorkflow", () => {
         expect(moneyRev.eq(info.div(2))).to.be.eq(true);
     })
     it("validityCheck", async () => {
-        const currentBlockNumber = await ethers.provider.getBlockNumber();
-        await time.advanceBlockTo(currentBlockNumber + moneyPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + moneyPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
         await protocol.startValidityCheckPhaseForMoneyMixer();
         await protocol.connect(user1).validityCheck();
     })

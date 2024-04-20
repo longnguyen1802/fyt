@@ -3,14 +3,9 @@ import { ethers } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import { Cryptography, MemberAccount, Protocol, ReferMixer, MoneyMixer } from "../typechain-types";
 import { ProtocolParams, setupProtocol, setUpInitialMemberAndStart } from "./helpers/setup";
+import {p,q,g,protocolFee,joinFee,referPhaseLength,moneyPhaseLength,signerDepositFee,roundLong} from "./utils/Constant";
 
 describe("SignerRotation", () => {
-  // Constants for testing
-  const protocolFee: BigNumber = BigNumber.from(100);
-  const signerDepositFee: BigNumber = BigNumber.from(100000);
-  const deploymenLength: number = 7 * 700; // 7000 block a day
-  const roundLong: number = 1200;
-
   // Protocol contracts and accounts
   let protocol: Protocol;
   let cryptography: Cryptography;

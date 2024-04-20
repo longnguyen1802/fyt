@@ -2,7 +2,8 @@ import { BigNumber, Signer } from "ethers";
 import { Cryptography, MemberAccount, MoneyMixer, Protocol, ReferMixer } from "../../typechain-types";
 import { deployAll, deployMemberAccount, generateMemberAccountParams } from "./deploy";
 import { ethers } from "hardhat";
-import { time } from "@nomicfoundation/hardhat-network-helpers";
+import {p,q,g, protocolFee, deploymenLength } from "../utils/Constant";
+import { getCurrentBlockNumber,advanceBlockTo } from "../utils/Time";
 export type AccountParams = {
     pusign: BigNumber;
     prsign: BigNumber;
@@ -40,13 +41,9 @@ export type ProtocolParams = {
     const params: ProtocolParams = {} as ProtocolParams;
   
     // Set up parameters
-    params.p = BigNumber.from(
-      "115792089237316195423570985008687907852837564279074904382605163141518161494337",
-    );
-    params.q = BigNumber.from("341948486974166000522343609283189");
-    params.g = BigNumber.from(
-      "3382179820063921351711459720945002840687054300606715993250688069077934439078",
-    );
+    params.p = p;
+    params.q = q;
+    params.g = g;
   
     // Set up signers
     [params.user0, params.user1, params.user2, params.user3,params.user4] = await ethers.getSigners();
@@ -94,17 +91,14 @@ export type ProtocolParams = {
     return params;
 }
 export async function setUpInitialMemberAndStart(params:ProtocolParams){
-    const protocolFee: BigNumber = BigNumber.from(100);
-    const deploymenLength: number = 7 * 700; // 7000 block a day
-    let currentBlockNumber:number = await ethers.provider.getBlockNumber();
     // Register initial members
     await params.account1.connect(params.user1).registerInitialMember(protocolFee, { value: protocolFee });
     await params.account2.connect(params.user2).registerInitialMember(protocolFee, { value: protocolFee });
     await params.account3.connect(params.user3).registerInitialMember(protocolFee, { value: protocolFee });
 
     // Advance blocks to simulate deployment completion
-    currentBlockNumber = await ethers.provider.getBlockNumber();
-    await time.advanceBlockTo(currentBlockNumber + deploymenLength);
+    let targetBlockNumber = await getCurrentBlockNumber() + deploymenLength;
+    await advanceBlockTo(targetBlockNumber);
     await params.protocol.closeDeploymentState();
     await params.protocol.startNewRound();
 }

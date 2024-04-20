@@ -1,30 +1,19 @@
-import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import { Cryptography, MemberAccount, Protocol, ReferMixer, MoneyMixer } from "../typechain-types";
 import { ProtocolParams, setupProtocol, setUpInitialMemberAndStart, AccountParams } from "./helpers/setup";
-import { getRandomBigNumber, getRandomRelativePrime, modPower } from "./utils/Math";
+import { getRandomBigNumber, modPower } from "./utils/Math";
 import { generateElgamaSignature } from "./utils/SignatureGen";
 import { deployMemberAccount, generateMemberAccountParams } from "./helpers/deploy";
+import {p,q,g,protocolFee,joinFee,referPhaseLength,moneyPhaseLength,signerDepositFee,roundLong} from "./utils/Constant";
+import { advanceBlockTo, getCurrentBlockNumber } from "./utils/Time";
 
 describe("ReferWorkflow", () => {
   // Protocol params
-  let params:ProtocolParams
+  let params: ProtocolParams;
   // Constant just for testing
-  const protocolFee = BigNumber.from(100);
-  const joinFee = BigNumber.from(100000);
-  const signerDepositFee = BigNumber.from(100000);
-  const deploymenLength = 7 * 700; // 7000 block a day
-  const roundLong = 1200;
-  // Phase control
-  const referPhaseLong = 400;
-  const moneyPhaseLong = 300;
 
-  // Protocol contracts and accounts
-  let p:BigNumber;
-  let q:BigNumber;
-  let g:BigNumber;
   let protocol: Protocol;
   let cryptography: Cryptography;
   let referMixer: ReferMixer;
@@ -49,9 +38,6 @@ describe("ReferWorkflow", () => {
   before(async () => {
     params =  await setupProtocol();
     await setUpInitialMemberAndStart(params)
-    p = params.p;
-    q = params.q;
-    g = params.g;
     cryptography = params.cryptography;
     protocol = params.protocol;
     referMixer = params.referMixer;
@@ -137,8 +123,8 @@ describe("ReferWorkflow", () => {
       expect(getE.eq(message.e)).to.be.eq(true);
     });
     it("signReferRequest", async () => {
-      const currentBlockNumber = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + referPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + referPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.startSignPhaseForReferMixer();
       const e = await referMixer.referMessage(referPuNonce);
       const s = await cryptography.signBlindSchnorrMessage(
@@ -167,8 +153,8 @@ describe("ReferWorkflow", () => {
       expect(referSig.eq(s)).to.be.eq(true);
     });
     it("onBoardMember", async () => {
-      const currentBlockNumber = await ethers.provider.getBlockNumber();
-      await time.advanceBlockTo(currentBlockNumber + referPhaseLong);
+      let targetBlockNumber = await getCurrentBlockNumber() + referPhaseLength;
+      await advanceBlockTo(targetBlockNumber);
       await protocol.startOnboardPhaseForReferMixer();
 
       const referSig = await referMixer.referSignature(referPuNonce);
