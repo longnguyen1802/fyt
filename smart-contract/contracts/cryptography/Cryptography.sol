@@ -27,7 +27,7 @@ contract Cryptography is ICryptography {
     uint256 beta,
     uint256 pusign,
     address memberAddress
-  ) public view returns (BlindSchnorrSig memory) {
+  ) public view returns (uint256, uint256) {
     uint256 r0 = mulmod(
       r,
       mulmod(
@@ -38,7 +38,8 @@ contract Cryptography is ICryptography {
       bs.p
     );
     uint256 e0 = uint256(keccak256(abi.encode(memberAddress, r0))) % bs.p;
-    return BlindSchnorrSig(e0, (e0 + beta) % bs.p);
+    uint256 e = (e0 + beta) % bs.p;
+    return (e0, e);
   }
 
   function signBlindSchnorrMessage(
@@ -53,21 +54,23 @@ contract Cryptography is ICryptography {
     uint256 s,
     uint256 alpha,
     uint256 e0
-  ) public view returns (SchnorrSignature memory) {
-    return SchnorrSignature(e0, (s + bs.q - alpha) % bs.q);
+  ) public view returns (uint256, uint256) {
+    uint256 s0 = (s + bs.q - alpha) % bs.q;
+    return (e0, s0);
   }
 
   function verifySchnorrSignature(
-    SchnorrSignature memory sig,
+    uint256 e0,
+    uint256 s0,
     address m,
     uint256 pusign
   ) external view returns (bool) {
     uint256 verifyFactor = mulmod(
-      Math.modExp(bs.g, sig.s0, bs.p),
-      Math.modExp(pusign, sig.e0, bs.p),
+      Math.modExp(bs.g, s0, bs.p),
+      Math.modExp(pusign, e0, bs.p),
       bs.p
     );
-    return ((sig.e0 % bs.p) == uint256(keccak256(abi.encode(m, verifyFactor))) % bs.p);
+    return ((e0 % bs.p) == uint256(keccak256(abi.encode(m, verifyFactor))) % bs.p);
   }
   /**************************Abe Okamoto Function ***************************/
   function prepareAbeOkamotoMessage(

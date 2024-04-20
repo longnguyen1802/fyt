@@ -1,6 +1,6 @@
 import {ethers} from 'hardhat';
-import {BigNumber, Signer} from 'ethers';
-import {getRandomBigNumber} from '../utils/Math';
+import {Signer} from 'ethers';
+import {getRandomBigInt} from '../utils/Math';
 import {generateKeyPair} from '../utils/KeyGen';
 import {Cryptography, Protocol, MemberAccount, ReferMixer, MoneyMixer} from '../../typechain-types';
 import {
@@ -19,18 +19,18 @@ import {
 } from '../utils/Constant';
 
 export function generateMemberAccountParams(
-  g: BigNumber,
-  q: BigNumber,
-  p: BigNumber,
+  g: bigint,
+  q: bigint,
+  p: bigint,
 ): {
-  pusign: BigNumber;
-  prsign: BigNumber;
-  purk: BigNumber;
-  prrk: BigNumber;
-  pusk: BigNumber;
-  prsk: BigNumber;
-  punonce: BigNumber;
-  prnonce: BigNumber;
+  pusign: bigint;
+  prsign: bigint;
+  purk: bigint;
+  prrk: bigint;
+  pusk: bigint;
+  prsk: bigint;
+  punonce: bigint;
+  prnonce: bigint;
 } {
   const {pubKey: pusign, privKey: prsign} = generateKeyPair(g, q, p);
   const {pubKey: purk, privKey: prrk} = generateKeyPair(g, q, p);
@@ -41,10 +41,10 @@ export function generateMemberAccountParams(
 
 async function deployCryptography(): Promise<Cryptography> {
   const Cryptography = await ethers.getContractFactory('Cryptography');
-  const Ms: BigNumber = getRandomBigNumber(q);
-  const Md: BigNumber = getRandomBigNumber(q);
+  const Ms: bigint = getRandomBigInt(q);
+  const Md: bigint = getRandomBigInt(q);
   const cryptography: Cryptography = await Cryptography.deploy(p, q, g, Ms, Md);
-  await cryptography.deployed();
+  await cryptography.waitForDeployment();
   return cryptography;
 }
 
@@ -59,31 +59,31 @@ async function deployProtocol(): Promise<Protocol> {
     deploymenLength,
     roundLong,
   );
-  await protocol.deployed();
+  await protocol.waitForDeployment();
   return protocol;
 }
 
 async function deployReferMixer(protocolAddress: string, cryptographyAddress: string): Promise<ReferMixer> {
   const ReferMixer = await ethers.getContractFactory('ReferMixer');
   const referMixer: ReferMixer = await ReferMixer.deploy(protocolAddress, cryptographyAddress, referPhaseLength);
-  await referMixer.deployed();
+  await referMixer.waitForDeployment();
   return referMixer;
 }
 
 async function deployMoneyMixer(protocolAddress: string, cryptographyAddress: string): Promise<MoneyMixer> {
   const MoneyMixer = await ethers.getContractFactory('MoneyMixer');
   const moneyMixer: MoneyMixer = await MoneyMixer.deploy(protocolAddress, cryptographyAddress, moneyPhaseLength);
-  await moneyMixer.deployed();
+  await moneyMixer.waitForDeployment();
   return moneyMixer;
 }
 
 export async function deployMemberAccount(
   protocolAddress: string,
   cryptographyAddress: string,
-  pubKey: BigNumber,
-  sendKey: BigNumber,
-  receiveKey: BigNumber,
-  signNonce: BigNumber,
+  pubKey: bigint,
+  sendKey: bigint,
+  receiveKey: bigint,
+  signNonce: bigint,
   user: Signer,
 ): Promise<MemberAccount> {
   const MemberAccount = await ethers.getContractFactory('MemberAccount');
@@ -98,7 +98,7 @@ export async function deployMemberAccount(
     protocolFee,
     joinFee,
   );
-  await account.deployed();
+  await account.waitForDeployment();
   return account;
 }
 
@@ -110,8 +110,14 @@ export async function deployAll(): Promise<{
 }> {
   const _cryptography: Cryptography = await deployCryptography();
   const _protocol: Protocol = await deployProtocol();
-  const _referMixer: ReferMixer = await deployReferMixer(_protocol.address, _cryptography.address);
-  const _moneyMixer: MoneyMixer = await deployMoneyMixer(_protocol.address, _cryptography.address);
-  await _protocol.setUpMixer(_moneyMixer.address, _referMixer.address);
+  const _referMixer: ReferMixer = await deployReferMixer(
+    await _protocol.getAddress(),
+    await _cryptography.getAddress(),
+  );
+  const _moneyMixer: MoneyMixer = await deployMoneyMixer(
+    await _protocol.getAddress(),
+    await _cryptography.getAddress(),
+  );
+  await _protocol.setUpMixer(await _moneyMixer.getAddress(), await _referMixer.getAddress());
   return {_cryptography, _protocol, _referMixer, _moneyMixer};
 }

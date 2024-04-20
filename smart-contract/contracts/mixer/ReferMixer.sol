@@ -58,10 +58,9 @@ contract ReferMixer is IReferMixer {
     uint256 s
   ) public {
     require(phaseControl.currentPhase >= 3, "Not in onboard phase");
-    SchnorrSignature memory schSig = SchnorrSignature(e, s);
     // Check BlindSchnorr Signature
     require(
-      ICryptography(cryptography).verifySchnorrSignature(schSig, account, signerPubKey),
+      ICryptography(cryptography).verifySchnorrSignature(e, s, account, signerPubKey),
       "Invalid Schnoor signature"
     );
   }

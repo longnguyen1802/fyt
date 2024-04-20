@@ -1,44 +1,38 @@
 import {ethers} from 'hardhat';
-import {BigNumber} from 'ethers';
-
-export function modPower(base: BigNumber, exponent: BigNumber, modulus: BigNumber): BigNumber {
-  let result: BigNumber = BigNumber.from(1);
-  base = base.mod(modulus);
-  while (exponent.gt(BigNumber.from(0))) {
-    if (exponent.mod(2).eq(BigNumber.from(1))) {
-      result = result.mul(base).mod(modulus);
+import {randomBytes} from 'crypto';
+export function modPower(base: bigint, exponent: bigint, modulus: bigint): bigint {
+  let result: bigint = BigInt(1);
+  base = base % modulus;
+  while (exponent > 0n) {
+    if (exponent % 2n === 1n) {
+      result = (result * base) % modulus;
     }
-    exponent = exponent.div(2);
-    base = base.mul(base).mod(modulus);
+    exponent = exponent / 2n;
+    base = (base * base) % modulus;
   }
   return result;
 }
 
-export function gcd(a: BigNumber, b: BigNumber): BigNumber {
-  // Convert the inputs to BigNumber
-  let aBN: BigNumber = BigNumber.from(a.toString());
-  let bBN: BigNumber = BigNumber.from(b.toString());
-
+export function gcd(a: bigint, b: bigint): bigint {
   // Implement the Euclidean algorithm to find the GCD
-  while (!bBN.isZero()) {
-    const temp: BigNumber = bBN;
-    bBN = aBN.mod(bBN);
-    aBN = temp;
+  while (b !== 0n) {
+    const temp: bigint = b;
+    b = a % b;
+    a = temp;
   }
-
-  return aBN;
+  return a;
 }
 
-export function getRandomBigNumber(max: BigNumber): BigNumber {
-  return ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(max);
+export function getRandomBigInt(max: bigint): bigint {
+  return BigInt('0x' + randomBytes(32).toString('hex')) % max;
 }
 
-export function getRandomRelativePrime(max: BigNumber, moduloNumber: BigNumber): BigNumber {
-  let number: BigNumber = getRandomBigNumber(max);
-  let subMod: BigNumber = moduloNumber.mod(number);
-  while (!gcd(number, subMod).eq(BigNumber.from(1))) {
-    number = getRandomBigNumber(max);
-    subMod = moduloNumber.mod(number);
+export function getRandomRelativePrime(max: bigint, moduloNumber: bigint): bigint {
+  let number: bigint = getRandomBigInt(max);
+  let subMod: bigint = moduloNumber % number;
+  while (gcd(number, subMod) !== 1n) {
+    number = getRandomBigInt(max);
+    subMod = moduloNumber % number;
   }
   return number;
 }

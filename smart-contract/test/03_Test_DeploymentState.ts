@@ -1,7 +1,5 @@
-import {time} from '@nomicfoundation/hardhat-network-helpers';
 import {expect} from 'chai';
-import {ethers} from 'hardhat';
-import {BigNumber, Signer} from 'ethers';
+import {Signer} from 'ethers';
 import {MemberAccount, Protocol} from '../typechain-types';
 import {setupProtocol} from './helpers/setup';
 import {advanceBlockTo, getCurrentBlockNumber} from './utils/Time';
@@ -46,7 +44,7 @@ describe('Deployment', () => {
 
     it('closeDeployment and check state', async () => {
       await protocol.closeDeploymentState();
-      const numMem: BigNumber = await protocol.numberMember();
+      const numMem: bigint = await protocol.numberMember();
       expect(numMem.toString()).to.eq('3');
     });
 
