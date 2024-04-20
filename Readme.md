@@ -15,6 +15,7 @@ What things you need to install the software and how to install them:
 
 - Node.js
 - npm
+- ganache : npm install ganache -g
 
 ### Installation
 
@@ -40,6 +41,18 @@ cd smart-contract
 npm run test
 ```
 
+Use ganache network for test
+
+In one terminal
+```
+chmod +x start_ganache.sh
+```
+
+In another terminal
+``bash
+cd smart-contract
+npm run test -- --network ganache
+``
 ## Static Code Analysis
 
 To run static code analysis using Slither:
