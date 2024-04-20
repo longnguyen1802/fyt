@@ -17,6 +17,9 @@ const config: HardhatUserConfig = {
         "0x0123456789012345678901234567890123456789012345678901234567890123"
       ],
     },
+    ganachecli: {
+      url: "http://localhost:7545",
+    }
   },
   gasReporter: {
     enabled: true,

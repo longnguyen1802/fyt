@@ -1,8 +1,8 @@
 import { ethers } from 'hardhat';
 import { network } from 'hardhat';
 import { time } from "@nomicfoundation/hardhat-network-helpers";
-
-const ganacheProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+import { networkUrls } from './Constant';
+const externalProvider = new ethers.providers.JsonRpcProvider(networkUrls[network.name]);
 
 // Function to mine a specified number of blocks
 export async function mineBlocks(numberOfBlocks: number): Promise<void> {
@@ -13,20 +13,19 @@ export async function mineBlocks(numberOfBlocks: number): Promise<void> {
 
 // Get the current block number
 export async function getCurrentBlockNumber(): Promise<number> {
-    if(network.name == "ganache"){
-        let currentBlockNumber = await ganacheProvider.getBlockNumber();
+    if(network.name != "localhost"){
+        let currentBlockNumber = await externalProvider.getBlockNumber();
         return currentBlockNumber;
     }
     else{
         let currentBlockNumber = await ethers.provider.getBlockNumber();
         return currentBlockNumber;
     }
-    
 }
 
 // Advance block to a specific number
 export async function advanceBlockTo(targetBlockNumber: number): Promise<void> {
-    if(network.name=="ganache"){
+    if(network.name!="localhost"){
         const currentBlock = await getCurrentBlockNumber();
         if (targetBlockNumber < currentBlock) {
             throw new Error(`Target block number (${targetBlockNumber}) is in the past`);

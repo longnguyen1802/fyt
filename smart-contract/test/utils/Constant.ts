@@ -16,3 +16,7 @@ export const deploymenLength: number = 7 * 70; // 700 block a day
 export const roundLong: number = 120;
 export const referPhaseLength = 40;
 export const moneyPhaseLength = 30;
+export const networkUrls: { [key: string]: string } = {
+  'ganache': 'http://localhost:8545',
+  'ganachecli': 'http://localhost:7545'
+};
