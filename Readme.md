@@ -41,7 +41,7 @@ cd smart-contract
 npm run test
 ```
 
-Use ganache network for test
+Use ganache network for test:
 
 In one terminal
 
