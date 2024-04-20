@@ -1,15 +1,25 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
-import { BigNumber, Signer } from "ethers";
-import { Cryptography, MemberAccount, Protocol, ReferMixer, MoneyMixer } from "../typechain-types";
-import { ProtocolParams, setupProtocol, setUpInitialMemberAndStart, AccountParams } from "./helpers/setup";
-import { getRandomBigNumber, modPower } from "./utils/Math";
-import { generateElgamaSignature } from "./utils/SignatureGen";
-import { deployMemberAccount, generateMemberAccountParams } from "./helpers/deploy";
-import {p,q,g,protocolFee,joinFee,referPhaseLength,moneyPhaseLength,signerDepositFee,roundLong} from "./utils/Constant";
-import { advanceBlockTo, getCurrentBlockNumber } from "./utils/Time";
+import {expect} from 'chai';
+import {ethers} from 'hardhat';
+import {BigNumber, Signer} from 'ethers';
+import {Cryptography, MemberAccount, Protocol, ReferMixer, MoneyMixer} from '../typechain-types';
+import {ProtocolParams, setupProtocol, setUpInitialMemberAndStart, AccountParams} from './helpers/setup';
+import {getRandomBigNumber, modPower} from './utils/Math';
+import {generateElgamaSignature} from './utils/SignatureGen';
+import {deployMemberAccount, generateMemberAccountParams} from './helpers/deploy';
+import {
+  p,
+  q,
+  g,
+  protocolFee,
+  joinFee,
+  referPhaseLength,
+  moneyPhaseLength,
+  signerDepositFee,
+  roundLong,
+} from './utils/Constant';
+import {advanceBlockTo, getCurrentBlockNumber} from './utils/Time';
 
-describe("ReferWorkflow", () => {
+describe('ReferWorkflow', () => {
   // Protocol params
   let params: ProtocolParams;
   // Constant just for testing
@@ -30,14 +40,14 @@ describe("ReferWorkflow", () => {
   let user2: Signer;
   let user3: Signer;
   // For refer test
-  let referAlpha:BigNumber;
-  let referBeta:BigNumber;
-  let originalMessage:BigNumber;
-  let referPuNonce:BigNumber;
-  let referPrNonce:BigNumber;
+  let referAlpha: BigNumber;
+  let referBeta: BigNumber;
+  let originalMessage: BigNumber;
+  let referPuNonce: BigNumber;
+  let referPrNonce: BigNumber;
   before(async () => {
-    params =  await setupProtocol();
-    await setUpInitialMemberAndStart(params)
+    params = await setupProtocol();
+    await setUpInitialMemberAndStart(params);
     cryptography = params.cryptography;
     protocol = params.protocol;
     referMixer = params.referMixer;
@@ -48,7 +58,7 @@ describe("ReferWorkflow", () => {
     ac1params = params.ac1params;
     ac2params = params.ac2params;
     ac3params = params.ac3params;
-    user1 = params.user1
+    user1 = params.user1;
     user2 = params.user2;
     user3 = params.user3;
     // Set up
@@ -59,41 +69,27 @@ describe("ReferWorkflow", () => {
     // Deploy account4
     ac4params = generateMemberAccountParams(params.g, params.q, params.p);
     account4 = await deployMemberAccount(
-        params.protocol.address,
-        params.cryptography.address,
-        ac4params.pusign,
-        ac4params.pusk,
-        ac4params.purk,
-        ac4params.punonce,
-        params.user4
-      );
-
+      params.protocol.address,
+      params.cryptography.address,
+      ac4params.pusign,
+      ac4params.pusk,
+      ac4params.purk,
+      ac4params.punonce,
+      params.user4,
+    );
   });
-  describe("Test ReferWorkflow", () => {
-    it("startRequestRefer", async () => {
+  describe('Test ReferWorkflow', () => {
+    it('startRequestRefer', async () => {
       // Let user3 try to refer user4
       // Generate message
-      const encoded = ethers.utils.defaultAbiCoder.encode(
-        ["address", "uint256"],
-        [account3.address, referPuNonce],
-      );
+      const encoded = ethers.utils.defaultAbiCoder.encode(['address', 'uint256'], [account3.address, referPuNonce]);
       const hashMes = ethers.utils.keccak256(encoded);
       const actualMessage = BigNumber.from(hashMes);
-      const { r: rSig1, s: sSig1 } = await generateElgamaSignature(
-        cryptography,
-        actualMessage,
-        ac1params.prrk,
-        p,
-        q,
-      );
-      await account1
-        .connect(user1)
-        .startRequestRefer(account3.address, referPuNonce, rSig1, sSig1);
-      expect(
-        await referMixer.referIdentify(account3.address, referPuNonce),
-      ).to.be.eq(true);
+      const {r: rSig1, s: sSig1} = await generateElgamaSignature(cryptography, actualMessage, ac1params.prrk, p, q);
+      await account1.connect(user1).startRequestRefer(account3.address, referPuNonce, rSig1, sSig1);
+      expect(await referMixer.referIdentify(account3.address, referPuNonce)).to.be.eq(true);
     });
-    it("sendReferRequest", async () => {
+    it('sendReferRequest', async () => {
       const message = await cryptography.blindSchnorrMessage(
         referPuNonce,
         referAlpha,
@@ -103,87 +99,46 @@ describe("ReferWorkflow", () => {
       );
       originalMessage = message.e0;
       // Generate message
-      const encoded = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "uint256"],
-        [referPuNonce, message.e],
-      );
+      const encoded = ethers.utils.defaultAbiCoder.encode(['uint256', 'uint256'], [referPuNonce, message.e]);
       const hashMes = ethers.utils.keccak256(encoded);
       const actualMessage = BigNumber.from(hashMes);
-      const { r: rSig, s: sSig } = await generateElgamaSignature(
-        cryptography,
-        actualMessage,
-        ac3params.prrk,
-        p,
-        q,
-      );
-      await account3
-        .connect(user3)
-        .sendReferRequest(referPuNonce, message.e, rSig, sSig);
+      const {r: rSig, s: sSig} = await generateElgamaSignature(cryptography, actualMessage, ac3params.prrk, p, q);
+      await account3.connect(user3).sendReferRequest(referPuNonce, message.e, rSig, sSig);
       const getE = await referMixer.referMessage(referPuNonce);
       expect(getE.eq(message.e)).to.be.eq(true);
     });
-    it("signReferRequest", async () => {
-      let targetBlockNumber = await getCurrentBlockNumber() + referPhaseLength;
+    it('signReferRequest', async () => {
+      let targetBlockNumber = (await getCurrentBlockNumber()) + referPhaseLength;
       await advanceBlockTo(targetBlockNumber);
       await protocol.startSignPhaseForReferMixer();
       const e = await referMixer.referMessage(referPuNonce);
-      const s = await cryptography.signBlindSchnorrMessage(
-        ac1params.prsign,
-        referPrNonce,
-        e,
-      );
+      const s = await cryptography.signBlindSchnorrMessage(ac1params.prsign, referPrNonce, e);
       // Start sign
-      const encoded = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "uint256"],
-        [referPuNonce, s],
-      );
+      const encoded = ethers.utils.defaultAbiCoder.encode(['uint256', 'uint256'], [referPuNonce, s]);
       const hashMes = ethers.utils.keccak256(encoded);
       const actualMessage = BigNumber.from(hashMes);
-      const { r: rSig, s: sSig } = await generateElgamaSignature(
-        cryptography,
-        actualMessage,
-        ac1params.prrk,
-        p,
-        q,
-      );
-      await account1
-        .connect(user1)
-        .signReferRequest(referPuNonce, s, rSig, sSig);
+      const {r: rSig, s: sSig} = await generateElgamaSignature(cryptography, actualMessage, ac1params.prrk, p, q);
+      await account1.connect(user1).signReferRequest(referPuNonce, s, rSig, sSig);
       const referSig = await referMixer.referSignature(referPuNonce);
       expect(referSig.eq(s)).to.be.eq(true);
     });
-    it("onBoardMember", async () => {
-      let targetBlockNumber = await getCurrentBlockNumber() + referPhaseLength;
+    it('onBoardMember', async () => {
+      let targetBlockNumber = (await getCurrentBlockNumber()) + referPhaseLength;
       await advanceBlockTo(targetBlockNumber);
       await protocol.startOnboardPhaseForReferMixer();
 
       const referSig = await referMixer.referSignature(referPuNonce);
-      const unblindSig = await cryptography.unblindBlindSchnorrMessage(
-        referSig,
-        referAlpha,
-        originalMessage,
-      );
+      const unblindSig = await cryptography.unblindBlindSchnorrMessage(referSig, referAlpha, originalMessage);
       // Start sign
-      const encoded = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "uint256"],
-        [unblindSig.e0, unblindSig.s0],
-      );
+      const encoded = ethers.utils.defaultAbiCoder.encode(['uint256', 'uint256'], [unblindSig.e0, unblindSig.s0]);
       const hashMes = ethers.utils.keccak256(encoded);
       const actualMessage = BigNumber.from(hashMes);
-      const { r: rSig, s: sSig } = await generateElgamaSignature(
-        cryptography,
-        actualMessage,
-        ac4params.prrk,
-        p,
-        q,
-      );
+      const {r: rSig, s: sSig} = await generateElgamaSignature(cryptography, actualMessage, ac4params.prrk, p, q);
 
       await account4
         .connect(params.user4)
-        .onBoard(unblindSig.e0, unblindSig.s0, rSig, sSig,{ value: protocolFee.add(joinFee) });
+        .onBoard(unblindSig.e0, unblindSig.s0, rSig, sSig, {value: protocolFee.add(joinFee)});
       expect(await protocol.members(account4.address)).to.be.eq(true);
     });
   });
 });
-
-

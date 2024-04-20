@@ -1,11 +1,21 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
-import { BigNumber, Signer } from "ethers";
-import { Cryptography, MemberAccount, Protocol, ReferMixer, MoneyMixer } from "../typechain-types";
-import { ProtocolParams, setupProtocol, setUpInitialMemberAndStart } from "./helpers/setup";
-import {p,q,g,protocolFee,joinFee,referPhaseLength,moneyPhaseLength,signerDepositFee,roundLong} from "./utils/Constant";
+import {expect} from 'chai';
+import {ethers} from 'hardhat';
+import {BigNumber, Signer} from 'ethers';
+import {Cryptography, MemberAccount, Protocol, ReferMixer, MoneyMixer} from '../typechain-types';
+import {ProtocolParams, setupProtocol, setUpInitialMemberAndStart} from './helpers/setup';
+import {
+  p,
+  q,
+  g,
+  protocolFee,
+  joinFee,
+  referPhaseLength,
+  moneyPhaseLength,
+  signerDepositFee,
+  roundLong,
+} from './utils/Constant';
 
-describe("SignerRotation", () => {
+describe('SignerRotation', () => {
   // Protocol contracts and accounts
   let protocol: Protocol;
   let cryptography: Cryptography;
@@ -19,8 +29,8 @@ describe("SignerRotation", () => {
   let user3: Signer;
 
   before(async () => {
-    let params:ProtocolParams = await setupProtocol();
-    await setUpInitialMemberAndStart(params)
+    let params: ProtocolParams = await setupProtocol();
+    await setUpInitialMemberAndStart(params);
     cryptography = params.cryptography;
     protocol = params.protocol;
     referMixer = params.referMixer;
@@ -28,21 +38,21 @@ describe("SignerRotation", () => {
     account1 = params.account1;
     account2 = params.account2;
     account3 = params.account3;
-    user1 = params.user1
+    user1 = params.user1;
     user2 = params.user2;
     user3 = params.user3;
   });
 
-  describe("BidSigner", () => {
-    it("bidForNextSigner", async () => {
+  describe('BidSigner', () => {
+    it('bidForNextSigner', async () => {
       // Account 3 bids for the next signer
-      await account3.connect(user3).bidSigner({ value: signerDepositFee });
+      await account3.connect(user3).bidSigner({value: signerDepositFee});
     });
 
-    it("claimRefundSigner", async () => {
+    it('claimRefundSigner', async () => {
       // Claim refund for account 3
       const accountBalanceBefore: BigNumber = await ethers.provider.getBalance(account3.address);
-      await account2.connect(user2).bidSigner({ value: signerDepositFee });
+      await account2.connect(user2).bidSigner({value: signerDepositFee});
       await account3.connect(user3).claimRefundSigner();
       const accountBalanceAfter: BigNumber = await ethers.provider.getBalance(account3.address);
       expect(accountBalanceAfter.sub(accountBalanceBefore).eq(signerDepositFee)).to.be.true;
