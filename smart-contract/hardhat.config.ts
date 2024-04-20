@@ -21,15 +21,7 @@ const config: HardhatUserConfig = {
     ganachecli: {
       url: "http://localhost:7545",
     }
-  },
-  gasReporter: {
-    enabled: true,
-    currency: "ETH",
-    outputFile: "gas-report.txt",
-    noColors: false,
-    // You can customize the gas reporter settings here
-    // Check the Hardhat Gas Reporter documentation for more options
-  },
+  }
 };
 
 export default config;

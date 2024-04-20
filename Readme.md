@@ -72,6 +72,12 @@ cd smart-contract
 npm run analyze:mythril
 ```
 
+## Gas report 
+Can add the network
+
+```bash
+REPORT_GAS=true npm run test
+```
 ## Linting
 
 For solidity
@@ -85,7 +91,7 @@ For javascript
 
 ```bash
 cd smart-contract
-npm run lint:js
+npm run lint:ts
 ```
 
 ## Built With
