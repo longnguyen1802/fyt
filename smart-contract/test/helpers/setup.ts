@@ -1,24 +1,24 @@
-import {BigNumber, Signer} from 'ethers';
+import {Signer} from 'ethers';
 import {Cryptography, MemberAccount, MoneyMixer, Protocol, ReferMixer} from '../../typechain-types';
 import {deployAll, deployMemberAccount, generateMemberAccountParams} from './deploy';
 import {ethers} from 'hardhat';
 import {p, q, g, protocolFee, deploymenLength} from '../utils/Constant';
 import {getCurrentBlockNumber, advanceBlockTo} from '../utils/Time';
 export type AccountParams = {
-  pusign: BigNumber;
-  prsign: BigNumber;
-  purk: BigNumber;
-  prrk: BigNumber;
-  pusk: BigNumber;
-  prsk: BigNumber;
-  punonce: BigNumber;
-  prnonce: BigNumber;
+  pusign: bigint;
+  prsign: bigint;
+  purk: bigint;
+  prrk: bigint;
+  pusk: bigint;
+  prsk: bigint;
+  punonce: bigint;
+  prnonce: bigint;
 };
 
 export type ProtocolParams = {
-  p: BigNumber;
-  q: BigNumber;
-  g: BigNumber;
+  p: bigint;
+  q: bigint;
+  g: bigint;
   user0: Signer;
   user1: Signer;
   user2: Signer;
@@ -62,8 +62,8 @@ export async function setupProtocol(): Promise<ProtocolParams> {
 
   // Deploy member accounts
   params.account1 = await deployMemberAccount(
-    params.protocol.address,
-    params.cryptography.address,
+    await params.protocol.getAddress(),
+    await params.cryptography.getAddress(),
     params.ac1params.pusign,
     params.ac1params.pusk,
     params.ac1params.purk,
@@ -71,8 +71,8 @@ export async function setupProtocol(): Promise<ProtocolParams> {
     params.user1,
   );
   params.account2 = await deployMemberAccount(
-    params.protocol.address,
-    params.cryptography.address,
+    await params.protocol.getAddress(),
+    await params.cryptography.getAddress(),
     params.ac2params.pusign,
     params.ac2params.pusk,
     params.ac2params.purk,
@@ -80,8 +80,8 @@ export async function setupProtocol(): Promise<ProtocolParams> {
     params.user2,
   );
   params.account3 = await deployMemberAccount(
-    params.protocol.address,
-    params.cryptography.address,
+    await params.protocol.getAddress(),
+    await params.cryptography.getAddress(),
     params.ac3params.pusign,
     params.ac3params.pusk,
     params.ac3params.purk,

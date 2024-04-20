@@ -8,17 +8,6 @@ struct AbeOkamotoBlind {
   uint256 mS;
   uint256 mD;
 }
-struct BlindSchnorrSig {
-  // Original Signature
-  uint256 e0;
-  // Blind Signature
-  uint256 e;
-}
-
-struct SchnorrSignature {
-  uint256 e0;
-  uint256 s0;
-}
 
 struct BlindSchnoor {
   uint256 g;
@@ -31,11 +20,6 @@ struct Elgama {
   uint256 g;
 }
 
-struct ElgamaSignature {
-  uint256 r;
-  uint256 s;
-}
-
 interface ICryptography {
   /**************************Blind Schnoor Function ***************************/
   function blindSchnorrMessage(
@@ -44,7 +28,7 @@ interface ICryptography {
     uint256 beta,
     uint256 y,
     address m
-  ) external view returns (BlindSchnorrSig memory);
+  ) external view returns (uint256, uint256);
 
   function signBlindSchnorrMessage(
     uint256 prk,
@@ -56,10 +40,11 @@ interface ICryptography {
     uint256 s,
     uint256 alpha,
     uint256 e0
-  ) external view returns (SchnorrSignature memory);
+  ) external view returns (uint256, uint256);
 
   function verifySchnorrSignature(
-    SchnorrSignature memory sig,
+    uint256 e0,
+    uint256 s0,
     address m,
     uint256 pk
   ) external returns (bool);

@@ -1,8 +1,7 @@
-import {BigNumber} from 'ethers';
-import {getRandomBigNumber, modPower} from './Math';
+import {getRandomBigInt, modPower} from './Math';
 
-export function generateKeyPair(g: BigNumber, q: BigNumber, p: BigNumber): {pubKey: BigNumber; privKey: BigNumber} {
-  const privKey: BigNumber = getRandomBigNumber(q);
-  const pubKey: BigNumber = modPower(g, privKey, p);
+export function generateKeyPair(g: bigint, q: bigint, p: bigint): {pubKey: bigint; privKey: bigint} {
+  const privKey: bigint = getRandomBigInt(q);
+  const pubKey: bigint = modPower(g, privKey, p);
   return {pubKey, privKey};
 }

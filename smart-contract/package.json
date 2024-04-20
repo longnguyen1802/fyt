@@ -1,5 +1,8 @@
 {
-  "name": "hardhat-project",
+  "name": "latest-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "test": "npx hardhat test",
     "analyze:slither": "slither . --filter-paths math --exclude-informational",
@@ -7,9 +10,11 @@
     "lint:sol": "npx prettier --write --plugin=prettier-plugin-solidity contracts/**/*.sol",
     "lint:ts": "prettier -w 'test/**/*.ts'"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
-    "@openzeppelin/contracts": "^5.0.2",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "hardhat": "^2.22.3",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1"

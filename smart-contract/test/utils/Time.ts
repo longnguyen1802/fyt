@@ -2,7 +2,7 @@ import {ethers} from 'hardhat';
 import {network} from 'hardhat';
 import {time} from '@nomicfoundation/hardhat-network-helpers';
 import {networkUrls} from './Constant';
-const externalProvider = new ethers.providers.JsonRpcProvider(networkUrls[network.name]);
+const externalProvider = new ethers.JsonRpcProvider(networkUrls[network.name]);
 
 // Function to mine a specified number of blocks
 export async function mineBlocks(numberOfBlocks: number): Promise<void> {
